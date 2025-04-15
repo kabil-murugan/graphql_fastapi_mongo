@@ -5,8 +5,9 @@ from typing import TYPE_CHECKING, Annotated, List, Optional
 import strawberry
 
 from backend.graphql.resolvers.user import get_user_orders
+from backend.models.order import Order as OrderModel
 from backend.utils.logger import get_logger
-from backend.utils.utils import extract_fields
+from backend.utils.utils import perform_resolving_action
 
 if TYPE_CHECKING:
     from backend.graphql.types.order import Order
@@ -41,6 +42,14 @@ class User:
             ]
         ]
     )
-    async def orders(self, info: strawberry.Info):
-        fields = extract_fields(info)
-        return await get_user_orders(self, fields)
+    async def orders(self, info: strawberry.Info) -> List[OrderModel]:
+        """Fetch orders for a user.
+        This function is used to resolve the orders field in the User.
+
+        Args:
+            info (strawberry.Info): GraphQL info object.
+
+        Returns:
+            List[OrderModel]: List of OrderModel objects.
+        """
+        return await perform_resolving_action(info, get_user_orders, self)

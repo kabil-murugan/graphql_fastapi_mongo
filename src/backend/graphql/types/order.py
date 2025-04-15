@@ -5,9 +5,11 @@ from typing import TYPE_CHECKING, Annotated, List, Optional
 
 import strawberry
 
-from backend.graphql.resolvers.product import get_product
-from backend.graphql.resolvers.user import get_user
-from backend.utils.utils import extract_fields
+from backend.graphql.resolvers.product import get_product_by_id
+from backend.graphql.resolvers.user import get_user_by_id
+from backend.models.product import Product as ProductModel
+from backend.models.user import User as UserModel
+from backend.utils.utils import perform_resolving_action
 
 if TYPE_CHECKING:
     from backend.graphql.types.product import Product
@@ -28,7 +30,7 @@ class OrderStatus(Enum):
 class OrderItem:
     """Order Item Object Type."""
 
-    product_id: strawberry.ID
+    product_id: strawberry.Private[strawberry.ID]
     quantity: Optional[int]
 
     @strawberry.field(
@@ -38,9 +40,19 @@ class OrderItem:
             ]
         ]
     )
-    async def product(self, info: strawberry.Info):
-        fields = extract_fields(info)
-        return await get_product(self.product_id, fields)
+    async def product(self, info: strawberry.Info) -> Optional[ProductModel]:
+        """Fetch product by ID.
+        This function is used to resolve the product field in the OrderItem.
+
+        Args:
+            info (strawberry.Info): GraphQL info object.
+
+        Returns:
+            Optional[ProductModel]: ProductModel object or None.
+        """
+        return await perform_resolving_action(
+            info, get_product_by_id, self.product_id
+        )
 
 
 @strawberry.type
@@ -48,7 +60,7 @@ class Order:
     """Order Object Type."""
 
     id: strawberry.ID
-    user_id: strawberry.ID
+    user_id: strawberry.Private[strawberry.ID]
     items: Optional[List["OrderItem"]]
     status: Optional["OrderStatus"]
 
@@ -57,6 +69,16 @@ class Order:
             Annotated["User", strawberry.lazy("backend.graphql.types.user")]
         ]
     )
-    async def user(self, info: strawberry.Info):
-        fields = extract_fields(info)
-        return await get_user(self.user_id, fields)
+    async def user(self, info: strawberry.Info) -> Optional[UserModel]:
+        """Fetch user by ID.
+        This function is used to resolve the user field in the Order object.
+
+        Args:
+            info (strawberry.Info): GraphQL info object.
+
+        Returns:
+            Optional[UserModel]: UserModel object or None.
+        """
+        return await perform_resolving_action(
+            info, get_user_by_id, self.user_id
+        )
