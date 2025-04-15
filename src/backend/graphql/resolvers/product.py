@@ -1,7 +1,5 @@
 """Resolvers for product-related GraphQL queries."""
 
-from typing import Optional
-
 import strawberry
 from bson import ObjectId
 from bson.errors import InvalidId
@@ -31,9 +29,7 @@ async def get_products(fields: list[str]) -> list[Product]:
     return [Product.model_validate(product) for product in products]
 
 
-async def get_product_by_id(
-    id: strawberry.ID, fields: list[str]
-) -> Optional[Product]:
+async def get_product_by_id(id: strawberry.ID, fields: list[str]) -> Product:
     """Fetch a product by ID with specified fields.
 
     Args:
@@ -41,7 +37,7 @@ async def get_product_by_id(
         fields (list[str]): List of fields to include in the projection.
 
     Raises:
-        ValueError: If the ID format is invalid.
+        ValueError: If the ID format is invalid or the product is not found.
 
     Returns:
         Optional[Product]: The Product object with the specified ID and fields,
@@ -60,4 +56,58 @@ async def get_product_by_id(
         raise ValueError(f"Invalid ID format: {id}. Check it and try again.")
     if products:
         return Product.model_validate(products[0])
-    return None
+    raise ValueError(f"Product with ID {id} not found.")
+
+
+async def create_product(name: str, price: float) -> Product:
+    """Create a new product.
+
+    Args:
+        name (str): The name of the product.
+        price (float): The price of the product.
+
+    Returns:
+        Product: The created Product object.
+    """
+    logger.info(f"Creating product with name: {name}, price: {price}")
+    product = Product(name=name, price=price)
+    await product.insert()
+    return product
+
+
+async def update_product(
+    id: strawberry.ID, name: str, price: float
+) -> Product:
+    """Update an existing product.
+
+    Args:
+        id (strawberry.ID): The ID of the product to update.
+        name (str): The new name of the product.
+        price (float): The new price of the product.
+
+    Returns:
+        Product: The updated Product object.
+    """
+    logger.info(f"Updating product with ID: {id}")
+    product = await get_product_by_id(id, ["name", "price"])
+    if name:
+        product.name = name
+    if price:
+        product.price = price
+    await product.save()
+    return product
+
+
+async def delete_product(id: strawberry.ID) -> Product:
+    """Delete an existing product.
+
+    Args:
+        id (strawberry.ID): The ID of the product to delete.
+
+    Returns:
+        Product: The deleted Product object.
+    """
+    logger.info(f"Deleting product with ID: {id}")
+    product = await get_product_by_id(id, ["name", "price"])
+    await product.delete()
+    return product

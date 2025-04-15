@@ -53,3 +53,11 @@ class User:
             List[OrderModel]: List of OrderModel objects.
         """
         return await perform_resolving_action(info, get_user_orders, self)
+
+
+@strawberry.input
+class ProfileInput:
+    """Input type for Profile."""
+
+    age: Optional[int]
+    location: Optional[str]

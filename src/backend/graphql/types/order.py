@@ -82,3 +82,11 @@ class Order:
         return await perform_resolving_action(
             info, get_user_by_id, self.user_id
         )
+
+
+@strawberry.input
+class OrderItemInput:
+    """Input type for Order Item."""
+
+    product_id: str
+    quantity: int

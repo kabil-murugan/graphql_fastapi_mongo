@@ -1,8 +1,10 @@
 """Utility functions for GraphQL queries and MongoDB projections."""
 
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 import strawberry
+from bson import ObjectId
+from bson.errors import InvalidId
 from strawberry.types.nodes import SelectedField
 from strawberry.utils.str_converters import to_snake_case
 
@@ -78,18 +80,39 @@ def build_projection(
 
 
 async def perform_resolving_action(
-    info: strawberry.Info,
+    info: Optional[strawberry.Info],
     resolver_function: Callable[..., Any],
     *args: Any,
 ) -> Any:
     """Perform a resolving action for a GraphQL field.
 
     Args:
-        info (strawberry.Info): GraphQL query information.
+        info (Optional[strawberry.Info]): GraphQL query information.
         resolver_function (Callable[..., Any]): The resolver function to call.
 
     Returns:
         Any: The result of the resolver function.
     """
-    fields = extract_fields(info)
-    return await resolver_function(*args, fields=fields)
+    if info:
+        fields = extract_fields(info)
+        return await resolver_function(*args, fields=fields)
+    return await resolver_function(*args)
+
+
+def validate_id(id: str) -> bool:
+    """Validate the format of an ID.
+
+    Args:
+        id (str): The ID to validate.
+
+    Raises:
+        ValueError: If the ID format is invalid.
+
+    Returns:
+        bool: True if the ID format is valid, False otherwise.
+    """
+    try:
+        ObjectId(id)
+        return True
+    except InvalidId:
+        raise ValueError(f"Invalid ID format: {id}. Check it and try again.")
