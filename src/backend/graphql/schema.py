@@ -2,8 +2,7 @@
 
 import strawberry
 
-from backend.graphql.queries import Query
 from backend.graphql.mutations import Mutation
-
+from backend.graphql.queries import Query
 
 graphql_schema = strawberry.Schema(query=Query, mutation=Mutation)

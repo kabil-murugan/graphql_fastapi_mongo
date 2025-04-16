@@ -59,5 +59,5 @@ class User:
 class ProfileInput:
     """Input type for Profile."""
 
-    age: Optional[int]
-    location: Optional[str]
+    age: int
+    location: str

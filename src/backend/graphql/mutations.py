@@ -4,7 +4,11 @@ from typing import Optional
 
 import strawberry
 
-from backend.graphql.resolvers.order import create_order, update_order, delete_order
+from backend.graphql.resolvers.order import (
+    create_order,
+    delete_order,
+    update_order,
+)
 from backend.graphql.resolvers.product import (
     create_product,
     delete_product,
@@ -15,7 +19,7 @@ from backend.graphql.resolvers.user import (
     delete_user,
     update_user,
 )
-from backend.graphql.types.order import Order, OrderStatus, OrderItemInput
+from backend.graphql.types.order import Order, OrderItemInput, OrderStatus
 from backend.graphql.types.product import Product
 from backend.graphql.types.user import ProfileInput, User
 from backend.models.order import Order as OrderModel
@@ -185,3 +189,15 @@ class Mutation:
         return await perform_resolving_action(
             None, update_order, id, user_id, items, status
         )
+
+    @strawberry.mutation(graphql_type=Order)
+    async def delete_order(self, id: strawberry.ID) -> OrderModel:
+        """Delete an existing order.
+
+        Args:
+            id (strawberry.ID): The ID of the order to delete.
+
+        Returns:
+            OrderModel: Deleted OrderModel object.
+        """
+        return await perform_resolving_action(None, delete_order, id)

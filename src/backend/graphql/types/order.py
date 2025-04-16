@@ -21,6 +21,7 @@ class OrderStatus(Enum):
     """Order Status Enum."""
 
     PENDING = "pending"
+    ORDERED = "ordered"
     SHIPPED = "shipped"
     DELIVERED = "delivered"
     CANCELLED = "cancelled"

@@ -11,6 +11,7 @@ class OrderStatus(str, Enum):
     """Order status enum."""
 
     PENDING = "pending"
+    ORDERED = "ordered"
     SHIPPED = "shipped"
     DELIVERED = "delivered"
     CANCELLED = "cancelled"

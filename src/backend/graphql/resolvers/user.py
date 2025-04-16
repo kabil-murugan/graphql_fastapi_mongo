@@ -1,6 +1,6 @@
 """Resolvers for user-related GraphQL queries."""
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import strawberry
 from bson import ObjectId
@@ -19,11 +19,11 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-async def get_users(fields: list) -> list[User]:
+async def get_users(fields: list[Any]) -> list[User]:
     """Fetch all users with specified fields.
 
     Args:
-        fields (list): fields to include in the projection.
+        fields (list[Any]): fields to include in the projection.
 
     Returns:
         list[User]: List of User objects with the specified fields.
@@ -35,12 +35,12 @@ async def get_users(fields: list) -> list[User]:
     return [User.model_validate(user) for user in users]
 
 
-async def get_user_by_id(id: strawberry.ID, fields: list[str]) -> User:
+async def get_user_by_id(id: strawberry.ID, fields: list[Any]) -> User:
     """Fetch a user by ID with specified fields.
 
     Args:
         id (strawberry.ID): The ID of the user to fetch.
-        fields (list[str]): List of fields to include in the projection.
+        fields (list[Any]): List of fields to include in the projection.
 
     Raises:
         ValueError: If the ID format is invalid or the user is not found.
@@ -65,12 +65,12 @@ async def get_user_by_id(id: strawberry.ID, fields: list[str]) -> User:
     raise ValueError(f"User with ID {id} not found.")
 
 
-async def get_user_orders(user: "UserType", fields: list) -> list[Order]:
+async def get_user_orders(user: "UserType", fields: list[Any]) -> list[Order]:
     """Fetch all orders for a user with specified fields.
 
     Args:
         user (UserType): The user object for which to fetch orders.
-        fields (list): fields to include in the projection.
+        fields (list[Any]): fields to include in the projection.
 
     Returns:
         list[Order]: List of Order objects with the specified fields.
@@ -127,14 +127,14 @@ async def update_user(
     """
     logger.info(f"Updating user with ID: {id}")
     user = await get_user_by_id(
-        id, ["name", "email", "profile.age", "profile.location"]
+        id, ["name", "email", {"profile": ["age", "location"]}]
     )
     if name:
         user.name = name
     if email:
         user.email = email
     if profile:
-        user.profile = Profile.model_validate(profile)
+        user.profile = Profile(age=profile.age, location=profile.location)
     await user.save()
     return user
 
@@ -150,7 +150,7 @@ async def delete_user(id: strawberry.ID) -> User:
     """
     logger.info(f"Deleting user with ID: {id}")
     user = await get_user_by_id(
-        id, ["name", "email", "profile.age", "profile.location"]
+        id, ["name", "email", {"profile": ["age", "location"]}]
     )
     await user.delete()
     return user

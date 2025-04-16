@@ -1,24 +1,30 @@
 """Resolvers for Order related GraphQL queries."""
 
-from typing import Optional
+from typing import Any, Optional
+
 import strawberry
 from bson import ObjectId
 from bson.errors import InvalidId
 
+from backend.graphql.types.order import OrderItemInput, OrderStatus
 from backend.models.order import Order, OrderItem
-from backend.models.order import OrderStatus as OrderStatusModel
-from backend.graphql.types.order import OrderStatus, OrderItemInput
+from backend.models.order import (
+    OrderItem as OrderItemModel,
+)
+from backend.models.order import (
+    OrderStatus as OrderStatusModel,
+)
 from backend.utils.logger import get_logger
 from backend.utils.utils import build_projection, validate_id
 
 logger = get_logger(__name__)
 
 
-async def get_orders(fields: list[str]) -> list[Order]:
+async def get_orders(fields: list[Any]) -> list[Order]:
     """Fetch all orders with specified fields.
 
     Args:
-        fields (list[str]): List of fields to include in the projection.
+        fields (list[Any]): List of fields to include in the projection.
 
     Returns:
         list[Order]: List of Order objects with the specified fields.
@@ -32,12 +38,12 @@ async def get_orders(fields: list[str]) -> list[Order]:
     return [Order.model_validate(order) for order in orders]
 
 
-async def get_order_by_id(id: strawberry.ID, fields: list[str]) -> Order:
+async def get_order_by_id(id: strawberry.ID, fields: list[Any]) -> Order:
     """Fetch an order by ID with specified fields.
 
     Args:
         id (strawberry.ID): The ID of the order to fetch.
-        fields (list[str]): List of fields to include in the projection.
+        fields (list[Any]): List of fields to include in the projection.
 
     Raises:
         ValueError: If the ID format is invalid or the order is not found.
@@ -80,7 +86,11 @@ async def create_order(
     if validate_id(user_id) and all(
         [validate_id(item.product_id) for item in items]
     ):
-        order = Order(user_id=user_id, items=items, status=status)
+        items_db = [
+            OrderItemModel(product_id=item.product_id, quantity=item.quantity)
+            for item in items
+        ]
+        order = Order(user_id=user_id, items=items_db, status=status)
         await order.insert()
         return order
     raise
@@ -108,14 +118,33 @@ async def update_order(
     logger.info(f"Updating order with ID: {id}")
     if validate_id(id):
         order = await get_order_by_id(
-            id, ["user_id", "items.product_id", "items.quantity", "status"]
+            id, ["user_id", {"items": ["product_id", "quantity"]}, "status"]
         )
         if user_id:
             order.user_id = user_id
         if items:
             order.items = [OrderItem.model_validate(item) for item in items]
         if status:
-            order.status = status
+            order.status = OrderStatusModel(status.value)
         await order.save()
+        return order
+    raise
+
+
+async def delete_order(id: strawberry.ID) -> Order:
+    """Delete an existing order.
+
+    Args:
+        id (strawberry.ID): The ID of the order to delete.
+
+    Returns:
+        Order: The deleted Order object.
+    """
+    logger.info(f"Deleting order with ID: {id}")
+    if validate_id(id):
+        order = await get_order_by_id(
+            id, ["user_id", {"items": ["quantity", "product_id"]}, "status"]
+        )
+        await order.delete()
         return order
     raise
