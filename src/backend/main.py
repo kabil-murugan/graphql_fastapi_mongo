@@ -1,14 +1,20 @@
 """Main entry point for the FastAPI application."""
 
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Awaitable, Callable, cast
 
 import uvicorn
 from fastapi import FastAPI
 from strawberry.fastapi import GraphQLRouter
 
 from backend.db.init_db import close_db, init_db
+from backend.graphql.context import get_context
 from backend.graphql.schema import graphql_schema
+import time
+from starlette.requests import Request
+from backend.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 @asynccontextmanager
@@ -19,11 +25,27 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await close_db(client)
 
 
-graphql_app = GraphQLRouter(schema=graphql_schema)
+graphql_app = GraphQLRouter(
+    schema=graphql_schema,
+    context_getter=cast(Callable[..., Awaitable[None]], get_context),
+)
 
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(graphql_app, prefix="/graphql")
+
+
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    start_time = time.perf_counter()
+    response = await call_next(request)
+    process_time = time.perf_counter() - start_time
+    response.headers["X-Process-Time"] = str(process_time)
+    logger.info(
+        f"Request: {request.method} {request.url}\n "
+        f"Process Time: {process_time:.4f} seconds"
+    )
+    return response
 
 
 if __name__ == "__main__":

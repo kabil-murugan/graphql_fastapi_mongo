@@ -5,7 +5,7 @@ from typing import Any, Optional
 import strawberry
 from bson import ObjectId
 from bson.errors import InvalidId
-
+from strawberry.dataloader import DataLoader
 from backend.graphql.types.order import OrderItemInput, OrderStatus
 from backend.models.order import Order, OrderItem
 from backend.models.order import (
@@ -20,53 +20,29 @@ from backend.utils.utils import build_projection, validate_id
 logger = get_logger(__name__)
 
 
-async def get_orders(fields: list[Any]) -> list[Order]:
-    """Fetch all orders with specified fields.
-
-    Args:
-        fields (list[Any]): List of fields to include in the projection.
-
-    Returns:
-        list[Order]: List of Order objects with the specified fields.
-    """
+async def get_orders(
+    fields: list[Any], order_loader: DataLoader
+) -> list[Order]:
     logger.info(f"Fetching all orders with fields: {fields}")
     projection = build_projection(fields)
     aggregation_pipeline = [
         {"$project": projection},
     ]
     orders = await Order.find_all().aggregate(aggregation_pipeline).to_list()
+    order_loader.prime_many({str(order["_id"]): order for order in orders})
+    logger.info("Primed orders in DataLoader")
     return [Order.model_validate(order) for order in orders]
 
 
-async def get_order_by_id(id: strawberry.ID, fields: list[Any]) -> Order:
-    """Fetch an order by ID with specified fields.
-
-    Args:
-        id (strawberry.ID): The ID of the order to fetch.
-        fields (list[Any]): List of fields to include in the projection.
-
-    Raises:
-        ValueError: If the ID format is invalid or the order is not found.
-
-    Returns:
-        Order: The Order object with the specified ID and fields.
-    """
+async def get_order_by_id(
+    id: strawberry.ID, fields: list[Any], order_loader: DataLoader
+) -> Order:
     logger.info(f"Fetching order with ID: {id} and fields: {fields}")
-    projection = build_projection(fields)
-    aggregation_pipeline = [
-        {"$project": projection},
-    ]
-    try:
-        order = (
-            await Order.find({"_id": ObjectId(id)})
-            .aggregate(aggregation_pipeline)
-            .to_list()
-        )
-    except InvalidId:
-        raise ValueError(f"Invalid ID format: {id}. Check it and try again.")
-    if order:
-        return Order.model_validate(order[0])
-    raise ValueError(f"Order with ID {id} not found.")
+    order_data = await order_loader.load((str(id), fields))
+    logger.info(f"Fetched order data: {order_data}")
+    if not order_data:
+        raise ValueError(f"Order with ID {id} not found.")
+    return Order.model_validate(order_data)
 
 
 async def create_order(

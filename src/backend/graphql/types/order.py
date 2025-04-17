@@ -9,11 +9,14 @@ from backend.graphql.resolvers.product import get_product_by_id
 from backend.graphql.resolvers.user import get_user_by_id
 from backend.models.product import Product as ProductModel
 from backend.models.user import User as UserModel
-from backend.utils.utils import perform_resolving_action
+from backend.utils.logger import get_logger
+from backend.utils.utils import extract_fields, perform_resolving_action
 
 if TYPE_CHECKING:
     from backend.graphql.types.product import Product
     from backend.graphql.types.user import User
+
+logger = get_logger(__name__)
 
 
 @strawberry.enum
@@ -80,9 +83,11 @@ class Order:
         Returns:
             Optional[UserModel]: UserModel object or None.
         """
-        return await perform_resolving_action(
-            info, get_user_by_id, self.user_id
+        user = await get_user_by_id(
+            self.user_id, extract_fields(info), info.context["user_loader"]
         )
+        logger.info(f"Fetched user for {self.user_id}: {user}")
+        return user
 
 
 @strawberry.input

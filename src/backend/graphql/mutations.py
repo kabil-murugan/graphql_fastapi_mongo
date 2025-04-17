@@ -54,40 +54,21 @@ class Mutation:
     @strawberry.mutation(graphql_type=User)
     async def update_user(
         self,
+        info: strawberry.Info,
         id: strawberry.ID,
         name: Optional[str] = None,
         email: Optional[str] = None,
         profile: Optional[ProfileInput] = None,
     ) -> UserModel:
-        """Update an existing user.
-
-        Args:
-            id (strawberry.ID): The ID of the user to update.
-            name (Optional[str], optional): The new name of the user.
-            Defaults to None.
-            email (Optional[str], optional): The new email of the user.
-            Defaults to None.
-            profile (Optional[ProfileInput], optional): The new profile of the
-            user. Defaults to None.
-
-        Returns:
-            UserModel: Updated UserModel object.
-        """
-        return await perform_resolving_action(
-            None, update_user, id, name, email, profile
+        return await update_user(
+            info.context["user_loader"], id, name, email, profile
         )
 
     @strawberry.mutation(graphql_type=User)
-    async def delete_user(self, id: strawberry.ID) -> UserModel:
-        """Delete an existing user.
-
-        Args:
-            id (strawberry.ID): The ID of the user to delete.
-
-        Returns:
-            UserModel: Deleted UserModel object.
-        """
-        return await perform_resolving_action(None, delete_user, id)
+    async def delete_user(
+        self, info: strawberry.Info, id: strawberry.ID
+    ) -> UserModel:
+        return await delete_user(info.context["user_loader"], id)
 
     @strawberry.mutation(graphql_type=Product)
     async def create_product(

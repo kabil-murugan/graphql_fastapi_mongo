@@ -116,3 +116,17 @@ def validate_id(id: str) -> bool:
         return True
     except InvalidId:
         raise ValueError(f"Invalid ID format: {id}. Check it and try again.")
+
+
+def is_field_missing(field: str, cached_data: dict) -> bool:
+    """Check if a field is missing in the cached data."""
+    keys = field.split(".")
+    current_data = cached_data
+
+    for key in keys:
+        if isinstance(current_data, dict) and key in current_data:
+            current_data = current_data[key]
+        else:
+            return True
+
+    return False

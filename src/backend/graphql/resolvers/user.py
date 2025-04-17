@@ -3,8 +3,7 @@
 from typing import TYPE_CHECKING, Any, Optional
 
 import strawberry
-from bson import ObjectId
-from bson.errors import InvalidId
+from strawberry.dataloader import DataLoader
 
 from backend.models.order import Order
 from backend.models.user import Profile, User
@@ -19,50 +18,25 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-async def get_users(fields: list[Any]) -> list[User]:
-    """Fetch all users with specified fields.
-
-    Args:
-        fields (list[Any]): fields to include in the projection.
-
-    Returns:
-        list[User]: List of User objects with the specified fields.
-    """
+async def get_users(fields: list[Any], user_loader: DataLoader) -> list[User]:
     logger.info(f"Fetching all users with fields: {fields}")
     projection = build_projection(fields)
     aggregation_pipeline = [{"$project": projection}]
     users = await User.find_all().aggregate(aggregation_pipeline).to_list()
+    user_loader.prime_many({str(user["_id"]): user for user in users})
+    logger.info("Primed users in DataLoader")
     return [User.model_validate(user) for user in users]
 
 
-async def get_user_by_id(id: strawberry.ID, fields: list[Any]) -> User:
-    """Fetch a user by ID with specified fields.
-
-    Args:
-        id (strawberry.ID): The ID of the user to fetch.
-        fields (list[Any]): List of fields to include in the projection.
-
-    Raises:
-        ValueError: If the ID format is invalid or the user is not found.
-
-    Returns:
-        Optional[User]: The User object with the specified ID and fields,
-        or None if not found.
-    """
-    logger.info(f"Fetching user with ID: {id} and fields: {fields}")
-    projection = build_projection(fields)
-    aggregation_pipeline = [{"$project": projection}]
-    try:
-        users = (
-            await User.find({"_id": ObjectId(id)})
-            .aggregate(aggregation_pipeline)
-            .to_list()
-        )
-    except InvalidId:
-        raise ValueError(f"Invalid ID format: {id}. Check it and try again.")
-    if users:
-        return User.model_validate(users[0])
-    raise ValueError(f"User with ID {id} not found.")
+async def get_user_by_id(
+    id: strawberry.ID, fields: list[Any], user_loader: DataLoader
+) -> User:
+    # logger.info(f"Fetching user with ID: {id} and fields: {fields}")
+    user_data = await user_loader.load((str(id), fields))
+    logger.info(f"Fetched user data: {user_data}")
+    if not user_data:
+        raise ValueError(f"User with ID {id} not found.")
+    return User.model_validate(user_data)
 
 
 async def get_user_orders(user: "UserType", fields: list[Any]) -> list[Order]:
@@ -75,6 +49,9 @@ async def get_user_orders(user: "UserType", fields: list[Any]) -> list[Order]:
     Returns:
         list[Order]: List of Order objects with the specified fields.
     """
+    logger.info(
+        f"Fetching orders for user ID: {user.id} with fields: {fields}"
+    )
     projection = build_projection(fields)
     aggregation_pipeline = [{"$project": projection}]
     orders = (
@@ -108,26 +85,15 @@ async def create_user(
 
 
 async def update_user(
+    user_loader: DataLoader,
     id: strawberry.ID,
     name: Optional[str] = None,
     email: Optional[str] = None,
     profile: Optional["ProfileInput"] = None,
 ) -> User:
-    """Update an existing user.
-
-    Args:
-        id (strawberry.ID): The ID of the user to update.
-        name (Optional[str], optional): The name to update. Defaults to None.
-        email (Optional[str], optional): The email to update. Defaults to None.
-        profile (Optional[&quot;ProfileInput&quot;], optional): The profile of
-        the user to update. Defaults to None.
-
-    Returns:
-        User: The updated User object.
-    """
     logger.info(f"Updating user with ID: {id}")
     user = await get_user_by_id(
-        id, ["name", "email", {"profile": ["age", "location"]}]
+        id, ["name", "email", {"profile": ["age", "location"]}], user_loader
     )
     if name:
         user.name = name
@@ -139,7 +105,7 @@ async def update_user(
     return user
 
 
-async def delete_user(id: strawberry.ID) -> User:
+async def delete_user(user_loader: DataLoader, id: strawberry.ID) -> User:
     """Delete a user by ID.
 
     Args:
@@ -150,7 +116,7 @@ async def delete_user(id: strawberry.ID) -> User:
     """
     logger.info(f"Deleting user with ID: {id}")
     user = await get_user_by_id(
-        id, ["name", "email", {"profile": ["age", "location"]}]
+        id, ["name", "email", {"profile": ["age", "location"]}], user_loader
     )
     await user.delete()
     return user
