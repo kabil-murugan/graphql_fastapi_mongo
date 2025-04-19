@@ -1,23 +1,27 @@
 """Resolvers for product-related GraphQL queries."""
 
-from typing import Any
+from typing import Any, Optional
 
 import strawberry
 from bson import ObjectId
 from bson.errors import InvalidId
 
+from backend.graphql.types.filter import LogicalFilterInput
 from backend.models.product import Product
 from backend.utils.logger import get_logger
-from backend.utils.utils import build_projection
+from backend.utils.utils import build_projection, build_query_from_filters
 
 logger = get_logger(__name__)
 
 
-async def get_products(fields: list[Any]) -> list[Product]:
+async def get_products(
+    fields: list[Any], filters: Optional["LogicalFilterInput"] = None
+) -> list[Product]:
     """Fetch all products with specified fields.
 
     Args:
         fields (list[Any]): List of fields to include in the projection.
+        filters (Optional[LogicalFilterInput], optional): Filters to apply.
 
     Returns:
         list[Product]: List of Product objects with the specified fields.
@@ -25,6 +29,10 @@ async def get_products(fields: list[Any]) -> list[Product]:
     logger.info(f"Fetching all products with fields: {fields}")
     projection = build_projection(fields)
     aggregation_pipeline = [{"$project": projection}]
+    if filters:
+        aggregation_pipeline.append(
+            {"$match": build_query_from_filters(filters)}
+        )
     products = (
         await Product.find_all().aggregate(aggregation_pipeline).to_list()
     )

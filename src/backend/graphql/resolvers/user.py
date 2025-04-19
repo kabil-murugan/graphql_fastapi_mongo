@@ -9,9 +9,15 @@ from bson.errors import InvalidId
 from backend.models.order import Order
 from backend.models.user import Profile, User
 from backend.utils.logger import get_logger
-from backend.utils.utils import build_projection
+from backend.utils.utils import (
+    build_filter_aggregation_pipeline,
+    build_projection,
+    build_query_from_filters,
+    extract_filters_by_prefixes,
+)
 
 if TYPE_CHECKING:
+    from backend.graphql.types.filter import LogicalFilterInput
     from backend.graphql.types.user import ProfileInput
     from backend.graphql.types.user import User as UserType
 
@@ -19,23 +25,55 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-async def get_users(fields: list[Any]) -> list[User]:
-    """Fetch all users with specified fields.
+async def get_users(
+    fields: list[Any], filters: Optional["LogicalFilterInput"] = None
+) -> list[User]:
+    """Fetch all users with specified fields and apply order filters.
 
     Args:
         fields (list[Any]): fields to include in the projection.
+        filters (Optional[LogicalFilterInput], optional): Filters to apply.
 
     Returns:
         list[User]: List of User objects with the specified fields.
     """
     logger.info(f"Fetching all users with fields: {fields}")
-    projection = build_projection(fields)
-    aggregation_pipeline = [{"$project": projection}]
+
+    if filters:
+        product_filters, order_filters, user_filters = (
+            extract_filters_by_prefixes(
+                filters, ["orders.items.product.", "orders."]
+            )
+        )
+        user_filter_query = build_query_from_filters(user_filters)
+        aggregation_pipeline = [
+            {"$match": user_filter_query},
+            {"$project": build_projection(fields)},
+        ]
+        if order_filters or product_filters:
+            aggregation_pipeline = build_filter_aggregation_pipeline(
+                ("orders", "_id", "user_id", "orders"),
+                order_filters,
+                aggregation_pipeline,
+            )
+            if product_filters:
+                aggregation_pipeline = build_filter_aggregation_pipeline(
+                    ("products", "orders.items.product_id", "_id", "products"),
+                    product_filters,
+                    aggregation_pipeline,
+                )
+    else:
+        aggregation_pipeline = [
+            {"$project": build_projection(fields)},
+        ]
     users = await User.find_all().aggregate(aggregation_pipeline).to_list()
     return [User.model_validate(user) for user in users]
 
 
-async def get_user_by_id(id: strawberry.ID, fields: list[Any]) -> User:
+async def get_user_by_id(
+    id: strawberry.ID,
+    fields: list[Any],
+) -> User:
     """Fetch a user by ID with specified fields.
 
     Args:
@@ -50,8 +88,9 @@ async def get_user_by_id(id: strawberry.ID, fields: list[Any]) -> User:
         or None if not found.
     """
     logger.info(f"Fetching user with ID: {id} and fields: {fields}")
-    projection = build_projection(fields)
-    aggregation_pipeline = [{"$project": projection}]
+    aggregation_pipeline = [
+        {"$project": build_projection(fields)},
+    ]
     try:
         users = (
             await User.find({"_id": ObjectId(id)})
@@ -65,20 +104,23 @@ async def get_user_by_id(id: strawberry.ID, fields: list[Any]) -> User:
     raise ValueError(f"User with ID {id} not found.")
 
 
-async def get_user_orders(user: "UserType", fields: list[Any]) -> list[Order]:
+async def get_user_orders(
+    user: "UserType",
+    fields: list[Any],
+) -> list[Order]:
     """Fetch all orders for a user with specified fields.
 
     Args:
         user (UserType): The user object for which to fetch orders.
-        fields (list[Any]): fields to include in the projection.
 
     Returns:
         list[Order]: List of Order objects with the specified fields.
     """
+    logger.info(f"Fetching orders for user: {user.id} with fields: {fields}")
     projection = build_projection(fields)
     aggregation_pipeline = [{"$project": projection}]
     orders = (
-        await Order.find(Order.user_id == str(user.id))
+        await Order.find(Order.user_id == user.id)
         .aggregate(aggregation_pipeline)
         .to_list()
     )

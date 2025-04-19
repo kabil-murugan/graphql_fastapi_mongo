@@ -1,8 +1,9 @@
 """Resolvers for Order related GraphQL queries."""
 
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import strawberry
+from beanie import PydanticObjectId
 from bson import ObjectId
 from bson.errors import InvalidId
 
@@ -15,26 +16,62 @@ from backend.models.order import (
     OrderStatus as OrderStatusModel,
 )
 from backend.utils.logger import get_logger
-from backend.utils.utils import build_projection, validate_id
+from backend.utils.utils import (
+    build_filter_aggregation_pipeline,
+    build_projection,
+    build_query_from_filters,
+    extract_filters_by_prefixes,
+    validate_id,
+)
+
+if TYPE_CHECKING:
+    from backend.graphql.types.filter import LogicalFilterInput
 
 logger = get_logger(__name__)
 
 
-async def get_orders(fields: list[Any]) -> list[Order]:
+async def get_orders(
+    fields: list[Any], filters: Optional["LogicalFilterInput"] = None
+) -> list[Order]:
     """Fetch all orders with specified fields.
 
     Args:
         fields (list[Any]): List of fields to include in the projection.
+        filters (Optional[LogicalFilterInput], optional): Filters to apply.
 
     Returns:
         list[Order]: List of Order objects with the specified fields.
     """
     logger.info(f"Fetching all orders with fields: {fields}")
     projection = build_projection(fields)
-    aggregation_pipeline = [
-        {"$project": projection},
-    ]
+    aggregation_pipeline = [{"$project": projection}]
+
+    if filters:
+        (
+            user_filters,
+            product_filters,
+            order_filters,
+        ) = extract_filters_by_prefixes(filters, ["user.", "items.product."])
+        order_filter_query = build_query_from_filters(order_filters)
+        aggregation_pipeline = [
+            {"$match": order_filter_query},
+        ]
+        if product_filters:
+            aggregation_pipeline = build_filter_aggregation_pipeline(
+                ("products", "items.product_id", "_id", "products"),
+                product_filters,
+                aggregation_pipeline,
+            )
+        if user_filters:
+            aggregation_pipeline = build_filter_aggregation_pipeline(
+                ("users", "user_id", "_id", "users"),
+                user_filters,
+                aggregation_pipeline,
+            )
+
+    logger.info(f"Aggregation pipeline: {aggregation_pipeline}")
     orders = await Order.find_all().aggregate(aggregation_pipeline).to_list()
+    logger.info(f"Orders fetched: {orders}")
     return [Order.model_validate(order) for order in orders]
 
 
@@ -87,7 +124,10 @@ async def create_order(
         [validate_id(item.product_id) for item in items]
     ):
         items_db = [
-            OrderItemModel(product_id=item.product_id, quantity=item.quantity)
+            OrderItemModel(
+                product_id=PydanticObjectId(ObjectId(item.product_id)),
+                quantity=item.quantity,
+            )
             for item in items
         ]
         order = Order(user_id=user_id, items=items_db, status=status)
@@ -121,7 +161,7 @@ async def update_order(
             id, ["user_id", {"items": ["product_id", "quantity"]}, "status"]
         )
         if user_id:
-            order.user_id = user_id
+            order.user_id = PydanticObjectId(ObjectId(user_id))
         if items:
             order.items = [OrderItem.model_validate(item) for item in items]
         if status:

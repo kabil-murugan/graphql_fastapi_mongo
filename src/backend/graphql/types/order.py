@@ -20,11 +20,11 @@ if TYPE_CHECKING:
 class OrderStatus(Enum):
     """Order Status Enum."""
 
-    PENDING = "pending"
-    ORDERED = "ordered"
-    SHIPPED = "shipped"
-    DELIVERED = "delivered"
-    CANCELLED = "cancelled"
+    PENDING = "PENDING"
+    ORDERED = "ORDERED"
+    SHIPPED = "SHIPPED"
+    DELIVERED = "DELIVERED"
+    CANCELLED = "CANCELLED"
 
 
 @strawberry.type

@@ -42,7 +42,10 @@ class User:
             ]
         ]
     )
-    async def orders(self, info: strawberry.Info) -> List[OrderModel]:
+    async def orders(
+        self,
+        info: strawberry.Info,
+    ) -> List[OrderModel]:
         """Fetch orders for a user.
         This function is used to resolve the orders field in the User.
 
@@ -52,7 +55,9 @@ class User:
         Returns:
             List[OrderModel]: List of OrderModel objects.
         """
-        return await perform_resolving_action(info, get_user_orders, self)
+        return await perform_resolving_action(
+            info, get_user_orders, self, filters=None
+        )
 
 
 @strawberry.input
