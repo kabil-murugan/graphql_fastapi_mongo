@@ -14,6 +14,7 @@ from backend.graphql.resolvers.product import (
     delete_product,
     update_product,
 )
+from backend.graphql.resolvers.review import create_review
 from backend.graphql.resolvers.user import (
     create_user,
     delete_user,
@@ -21,9 +22,11 @@ from backend.graphql.resolvers.user import (
 )
 from backend.graphql.types.order import Order, OrderItemInput, OrderStatus
 from backend.graphql.types.product import Product
+from backend.graphql.types.review import Review
 from backend.graphql.types.user import ProfileInput, User
 from backend.models.order import Order as OrderModel
 from backend.models.product import Product as ProductModel
+from backend.models.review import Review as ReviewModel
 from backend.models.user import User as UserModel
 from backend.utils.utils import perform_resolving_action
 
@@ -201,3 +204,16 @@ class Mutation:
             OrderModel: Deleted OrderModel object.
         """
         return await perform_resolving_action(None, delete_order, id)
+
+    @strawberry.mutation(graphql_type=Review)
+    async def create_review(
+        self,
+        product_id: str,
+        user_id: str,
+        rating: int,
+        comment: Optional[str] = None,
+    ) -> ReviewModel:
+        """Create a new review."""
+        return await perform_resolving_action(
+            None, create_review, product_id, user_id, rating, comment
+        )

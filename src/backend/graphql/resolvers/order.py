@@ -8,9 +8,9 @@ from bson import ObjectId
 from bson.errors import InvalidId
 
 from backend.graphql.types.order import OrderItemInput, OrderStatus
-from backend.models.order import Order, OrderItem
 from backend.models.order import (
-    OrderItem as OrderItemModel,
+    Order,
+    OrderItem,
 )
 from backend.models.order import (
     OrderStatus as OrderStatusModel,
@@ -49,19 +49,28 @@ async def get_orders(
     if filters:
         (
             user_filters,
+            review_filters,
             product_filters,
             order_filters,
-        ) = extract_filters_by_prefixes(filters, ["user.", "items.product."])
+        ) = extract_filters_by_prefixes(
+            filters, ["user.", "items.product.reviews", "items.product."]
+        )
         order_filter_query = build_query_from_filters(order_filters)
         aggregation_pipeline = [
             {"$match": order_filter_query},
         ]
-        if product_filters:
+        if product_filters or review_filters:
             aggregation_pipeline = build_filter_aggregation_pipeline(
                 ("products", "items.product_id", "_id", "products"),
                 product_filters,
                 aggregation_pipeline,
             )
+            if review_filters:
+                aggregation_pipeline = build_filter_aggregation_pipeline(
+                    ("reviews", "products.review_ids", "_id", "reviews"),
+                    review_filters,
+                    aggregation_pipeline,
+                )
         if user_filters:
             aggregation_pipeline = build_filter_aggregation_pipeline(
                 ("users", "user_id", "_id", "users"),
@@ -124,7 +133,7 @@ async def create_order(
         [validate_id(item.product_id) for item in items]
     ):
         items_db = [
-            OrderItemModel(
+            OrderItem(
                 product_id=PydanticObjectId(ObjectId(item.product_id)),
                 quantity=item.quantity,
             )

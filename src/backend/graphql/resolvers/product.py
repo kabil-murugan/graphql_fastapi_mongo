@@ -3,13 +3,20 @@
 from typing import Any, Optional
 
 import strawberry
+from beanie import PydanticObjectId
 from bson import ObjectId
 from bson.errors import InvalidId
 
 from backend.graphql.types.filter import LogicalFilterInput
 from backend.models.product import Product
+from backend.models.review import Review
 from backend.utils.logger import get_logger
-from backend.utils.utils import build_projection, build_query_from_filters
+from backend.utils.utils import (
+    build_projection,
+    build_query_from_filters,
+    extract_filters_by_prefixes,
+    build_filter_aggregation_pipeline,
+)
 
 logger = get_logger(__name__)
 
@@ -29,13 +36,25 @@ async def get_products(
     logger.info(f"Fetching all products with fields: {fields}")
     projection = build_projection(fields)
     aggregation_pipeline = [{"$project": projection}]
-    if filters:
-        aggregation_pipeline.append(
-            {"$match": build_query_from_filters(filters)}
+
+    (review_filters, product_filters) = extract_filters_by_prefixes(
+        filters, ["reviews."]
+    )
+    product_filter_query = build_query_from_filters(product_filters)
+    aggregation_pipeline = [
+        {"$match": product_filter_query},
+    ]
+    if review_filters:
+        aggregation_pipeline = build_filter_aggregation_pipeline(
+            ("reviews", "review_ids", "_id", "reviews"),
+            review_filters,
+            aggregation_pipeline,
         )
+    logger.info(f"Aggregation pipeline: {aggregation_pipeline}")
     products = (
         await Product.find_all().aggregate(aggregation_pipeline).to_list()
     )
+    logger.info(f"Products fetched: {products}")
     return [Product.model_validate(product) for product in products]
 
 
@@ -67,6 +86,23 @@ async def get_product_by_id(id: strawberry.ID, fields: list[Any]) -> Product:
     if products:
         return Product.model_validate(products[0])
     raise ValueError(f"Product with ID {id} not found.")
+
+
+async def get_product_reviews(
+    product_id: strawberry.ID, fields: list[Any]
+) -> list[Review]:
+    """Fetch all reviews for a product with specified fields."""
+    logger.info(
+        f"Fetching reviews for product: {product_id} with fields: {fields}"
+    )
+    projection = build_projection(fields)
+    aggregation_pipeline = [{"$project": projection}]
+    reviews = (
+        await Review.find(Review.product_id == PydanticObjectId(product_id))
+        .aggregate(aggregation_pipeline)
+        .to_list()
+    )
+    return [Review.model_validate(review) for review in reviews]
 
 
 async def create_product(name: str, price: float) -> Product:

@@ -6,17 +6,19 @@ import strawberry
 
 from backend.graphql.resolvers.order import get_order_by_id, get_orders
 from backend.graphql.resolvers.product import get_product_by_id, get_products
+from backend.graphql.resolvers.review import get_reviews
 from backend.graphql.resolvers.user import get_user_by_id, get_users
 from backend.graphql.types.filter import LogicalFilterInput
 from backend.graphql.types.order import Order
 from backend.graphql.types.product import Product
+from backend.graphql.types.review import Review
 from backend.graphql.types.user import User
 from backend.models.order import Order as OrderModel
 from backend.models.product import Product as ProductModel
+from backend.models.review import Review as ReviewModel
 from backend.models.user import User as UserModel
 from backend.utils.logger import get_logger
 from backend.utils.utils import perform_resolving_action
-
 
 logger = get_logger(__name__)
 
@@ -81,6 +83,26 @@ class Query:
         """
         return await perform_resolving_action(
             info, get_products, filters=filters
+        )
+
+    @strawberry.field(graphql_type=list[Review])
+    async def reviews(
+        self,
+        info: strawberry.Info,
+        filters: Optional[LogicalFilterInput] = None,
+    ) -> list[ReviewModel]:
+        """Get all reviews.
+        This function is used to resolve the reviews query in the GraphQL API.
+
+        Args:
+            info (strawberry.Info): GraphQL info object.
+            filters (Optional[LogicalFilterInput]): Filters to apply.
+
+        Returns:
+            list[ReviewModel]: List of ReviewModel objects.
+        """
+        return await perform_resolving_action(
+            info, get_reviews, filters=filters
         )
 
     @strawberry.field(graphql_type=User)
