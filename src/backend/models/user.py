@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from beanie import Document
+from beanie import Document, PydanticObjectId
 from pydantic import BaseModel, Field
 
 
@@ -19,6 +19,7 @@ class User(Document):
     name: Optional[str] = Field(None)
     email: Optional[str] = Field(None)
     profile: Optional[Profile] = Field(None)
+    review_ids: Optional[list[PydanticObjectId]] = Field(None)
 
     class Settings:
         name = "users"

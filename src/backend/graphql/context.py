@@ -5,8 +5,9 @@ from bson import ObjectId
 from strawberry.dataloader import AbstractCache
 
 from backend.graphql.dataloader import CustomDataLoader
-from backend.models.user import User as UserModel
 from backend.models.order import Order as OrderModel
+from backend.models.product import Product as ProductModel
+from backend.models.user import User as UserModel
 from backend.utils.logger import get_logger
 from backend.utils.utils import build_projection, is_field_missing
 
@@ -16,11 +17,7 @@ logger = get_logger(__name__)
 async def load_users(
     ids_with_fields: list[tuple[str, list[Any]]],
 ) -> list[dict[str, Any]]:
-    logger.info(
-        "Loading users with IDs: "
-        f"{[user_id for user_id, _ in ids_with_fields]}"
-        f"\nand fields: {[fields for _, fields in ids_with_fields]}"
-    )
+    logger.info("Loading users...")
     users_data: list[dict[str, Any]] = []
     for user_id, fields in ids_with_fields:
         cached_user_future = user_cache.get(user_id)
@@ -30,13 +27,13 @@ async def load_users(
             else {}
         )
         projection_fields = build_projection(fields)
-        logger.info(f"Projection_fields: {projection_fields}")
+        # logger.info(f"Projection_fields: {projection_fields}")
         missing_projection_fields = {
             field: 1
             for field in projection_fields
             if is_field_missing(field, cached_user)
         }
-        logger.info(f"Missing projection fields: {missing_projection_fields}")
+        # logger.info(f"Missing projection fields: {missing_projection_fields}")
         if missing_projection_fields:
             aggregation_pipeline = [{"$project": missing_projection_fields}]
             user_data = (
@@ -45,7 +42,7 @@ async def load_users(
                 .to_list()
             )
             consolidated_user_data = {**cached_user, **user_data[0]}
-            logger.info(f"Consolidated user data: {consolidated_user_data}")
+            # logger.info(f"Consolidated user data: {consolidated_user_data}")
         users_data.append(consolidated_user_data)
 
     return users_data
@@ -54,11 +51,7 @@ async def load_users(
 async def load_orders(
     ids_with_fields: list[tuple[str, list[Any]]],
 ) -> list[dict[str, Any]]:
-    logger.info(
-        "Loading orders with IDs: "
-        f"{[order_id for order_id, _ in ids_with_fields]} "
-        f"and fields: {[fields for _, fields in ids_with_fields]}"
-    )
+    logger.info("Loading orders...")
     orders_data: list[dict[str, Any]] = []
     for order_id, fields in ids_with_fields:
         cached_order_future = order_cache.get(order_id)
@@ -68,13 +61,13 @@ async def load_orders(
             else {}
         )
         projection_fields = build_projection(fields)
-        logger.info(f"Projection_fields: {projection_fields}")
+        # logger.info(f"Projection_fields: {projection_fields}")
         missing_projection_fields = {
             field: 1
             for field in projection_fields
             if is_field_missing(field, cached_order)
         }
-        logger.info(f"Missing projection fields: {missing_projection_fields}")
+        # logger.info(f"Missing projection fields: {missing_projection_fields}")
         if missing_projection_fields:
             aggregation_pipeline = [{"$project": missing_projection_fields}]
             order_data = (
@@ -83,9 +76,44 @@ async def load_orders(
                 .to_list()
             )
             consolidated_order_data = {**cached_order, **order_data[0]}
-            logger.info(f"Consolidated order data: {consolidated_order_data}")
+            # logger.info(f"Consolidated order data: {consolidated_order_data}")
         orders_data.append(consolidated_order_data)
     return orders_data
+
+
+async def load_products(
+    ids_with_fields: list[tuple[str, list[Any]]],
+) -> list[dict[str, Any]]:
+    logger.info("Loading products...")
+    products_data: list[dict[str, Any]] = []
+    for product_id, fields in ids_with_fields:
+        cached_product_future = product_cache.get(product_id)
+        cached_product = (
+            cached_product_future.result()
+            if cached_product_future and cached_product_future.done()
+            else {}
+        )
+        projection_fields = build_projection(fields)
+        # logger.info(f"Projection_fields: {projection_fields}")
+        missing_projection_fields = {
+            field: 1
+            for field in projection_fields
+            if is_field_missing(field, cached_product)
+        }
+        # logger.info(f"Missing projection fields: {missing_projection_fields}")
+        if missing_projection_fields:
+            aggregation_pipeline = [{"$project": missing_projection_fields}]
+            product_data = (
+                await ProductModel.find({"_id": ObjectId(product_id)})
+                .aggregate(aggregation_pipeline)
+                .to_list()
+            )
+            consolidated_product_data = {**cached_product, **product_data[0]}
+            # logger.info(
+            #     f"Consolidated product data: {consolidated_product_data}"
+            # )
+        products_data.append(consolidated_product_data)
+    return products_data
 
 
 class CustomCache(AbstractCache[str, dict[str, Any]]):
@@ -133,5 +161,11 @@ async def get_context() -> dict[str, CustomDataLoader]:
         "user_loader": CustomDataLoader(
             load_fn=load_users,
             cache_map=user_cache,
+        ),
+        "order_loader": CustomDataLoader(
+            load_fn=load_orders, cache_map=order_cache
+        ),
+        "product_loader": CustomDataLoader(
+            load_fn=load_products, cache_map=product_cache
         ),
     }
