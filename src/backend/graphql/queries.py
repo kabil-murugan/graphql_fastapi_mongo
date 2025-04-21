@@ -16,7 +16,7 @@ from backend.graphql.types.user import User
 from backend.models.order import Order as OrderModel
 from backend.models.product import Product as ProductModel
 from backend.models.review import Review as ReviewModel
-from backend.models.user import User as UserModel
+from backend.models.user import User as UserOutput, User as UserModel
 from backend.utils.logger import get_logger
 from backend.utils.utils import perform_resolving_action
 
@@ -32,7 +32,7 @@ class Query:
         self,
         info: strawberry.Info,
         filters: Optional[LogicalFilterInput] = None,
-    ) -> list[UserModel]:
+    ) -> list[UserOutput]:
         """Get all users.
         This function is used to resolve the users query in the GraphQL API.
 

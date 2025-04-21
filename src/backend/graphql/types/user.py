@@ -1,6 +1,6 @@
 """Object Types for User."""
 
-from typing import TYPE_CHECKING, Annotated, List, Optional
+from typing import TYPE_CHECKING, Annotated, Optional
 
 import strawberry
 
@@ -35,7 +35,7 @@ class User:
 
     @strawberry.field(
         graphql_type=Optional[
-            List[
+            list[
                 Annotated[
                     "Order", strawberry.lazy("backend.graphql.types.order")
                 ]
@@ -45,7 +45,7 @@ class User:
     async def orders(
         self,
         info: strawberry.Info,
-    ) -> List[OrderModel]:
+    ) -> list[OrderModel]:
         """Fetch orders for a user.
         This function is used to resolve the orders field in the User.
 

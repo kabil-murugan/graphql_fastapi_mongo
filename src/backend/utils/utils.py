@@ -75,7 +75,12 @@ def build_projection(
     Returns:
         dict[str, int]: A dictionary representing the projection.
     """
-    projection = {"user_id": 1, "items.product_id": 1}
+    projection = {
+        "user_id": 1,
+        "items.product_id": 1,
+        "product_id": 1,
+        "review_ids": 1,
+    }
     for field in fields:
         if isinstance(field, str):
             full_key = f"{parent_key}.{field}" if parent_key else field
