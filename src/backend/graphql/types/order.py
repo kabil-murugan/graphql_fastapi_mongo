@@ -10,7 +10,7 @@ from backend.graphql.resolvers.user import get_user_by_id
 from backend.models.product import Product as ProductModel
 from backend.models.user import User as UserModel
 from backend.utils.logger import get_logger
-from backend.utils.utils import extract_fields, perform_resolving_action
+from backend.utils.utils import extract_fields
 
 if TYPE_CHECKING:
     from backend.graphql.types.product import Product
@@ -23,11 +23,11 @@ logger = get_logger(__name__)
 class OrderStatus(Enum):
     """Order Status Enum."""
 
-    PENDING = "pending"
-    ORDERED = "ordered"
-    SHIPPED = "shipped"
-    DELIVERED = "delivered"
-    CANCELLED = "cancelled"
+    PENDING = "PENDING"
+    ORDERED = "ORDERED"
+    SHIPPED = "SHIPPED"
+    DELIVERED = "DELIVERED"
+    CANCELLED = "CANCELLED"
 
 
 @strawberry.type
@@ -54,8 +54,10 @@ class OrderItem:
         Returns:
             Optional[ProductModel]: ProductModel object or None.
         """
-        return await perform_resolving_action(
-            info, get_product_by_id, self.product_id
+        return await get_product_by_id(
+            self.product_id,
+            extract_fields(info),
+            info.context["product_loader"],
         )
 
 
@@ -83,11 +85,9 @@ class Order:
         Returns:
             Optional[UserModel]: UserModel object or None.
         """
-        user = await get_user_by_id(
+        return await get_user_by_id(
             self.user_id, extract_fields(info), info.context["user_loader"]
         )
-        logger.info(f"Fetched user for {self.user_id}: {user}")
-        return user
 
 
 @strawberry.input

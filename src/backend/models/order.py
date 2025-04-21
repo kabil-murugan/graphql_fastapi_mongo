@@ -3,31 +3,31 @@
 from enum import Enum
 from typing import List, Optional
 
-from beanie import Document
+from beanie import Document, PydanticObjectId
 from pydantic import BaseModel, Field
 
 
 class OrderStatus(str, Enum):
     """Order status enum."""
 
-    PENDING = "pending"
-    ORDERED = "ordered"
-    SHIPPED = "shipped"
-    DELIVERED = "delivered"
-    CANCELLED = "cancelled"
+    PENDING = "PENDING"
+    ORDERED = "ORDERED"
+    SHIPPED = "SHIPPED"
+    DELIVERED = "DELIVERED"
+    CANCELLED = "CANCELLED"
 
 
 class OrderItem(BaseModel):
     """Order item model."""
 
-    product_id: Optional[str] = Field(None)
+    product_id: Optional[PydanticObjectId] = Field(None)
     quantity: Optional[int] = Field(None)
 
 
 class Order(Document):
     """Order model."""
 
-    user_id: Optional[str] = Field(None)
+    user_id: Optional[PydanticObjectId] = Field(None)
     items: Optional[List[OrderItem]] = Field(None)
     status: Optional[OrderStatus] = Field(None)
 

@@ -3,14 +3,21 @@
 from typing import TYPE_CHECKING, Any, Optional
 
 import strawberry
+from bson import ObjectId
 from strawberry.dataloader import DataLoader
 
 from backend.models.order import Order
 from backend.models.user import Profile, User
 from backend.utils.logger import get_logger
-from backend.utils.utils import build_projection
+from backend.utils.utils import (
+    build_filter_aggregation_pipeline,
+    build_projection,
+    build_query_from_filters,
+    extract_filters_by_prefixes,
+)
 
 if TYPE_CHECKING:
+    from backend.graphql.types.filter import LogicalFilterInput
     from backend.graphql.types.user import ProfileInput
     from backend.graphql.types.user import User as UserType
 
@@ -18,10 +25,41 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-async def get_users(fields: list[Any], user_loader: DataLoader) -> list[User]:
+async def get_users(
+    fields: list[Any],
+    user_loader: DataLoader,
+    filters: Optional["LogicalFilterInput"] = None,
+) -> list[User]:
     logger.info(f"Fetching all users with fields: {fields}")
-    projection = build_projection(fields)
-    aggregation_pipeline = [{"$project": projection}]
+
+    if filters:
+        product_filters, order_filters, user_filters = (
+            extract_filters_by_prefixes(
+                filters, ["orders.items.product.", "orders."]
+            )
+        )
+        user_filter_query = build_query_from_filters(user_filters)
+        aggregation_pipeline = [
+            {"$match": user_filter_query},
+            {"$project": build_projection(fields)},
+        ]
+        if order_filters or product_filters:
+            aggregation_pipeline = build_filter_aggregation_pipeline(
+                ("orders", "_id", "user_id", "orders"),
+                order_filters,
+                aggregation_pipeline,
+            )
+            if product_filters:
+                aggregation_pipeline = build_filter_aggregation_pipeline(
+                    ("products", "orders.items.product_id", "_id", "products"),
+                    product_filters,
+                    aggregation_pipeline,
+                )
+    else:
+        aggregation_pipeline = [
+            {"$project": build_projection(fields)},
+        ]
+
     users = await User.find_all().aggregate(aggregation_pipeline).to_list()
     user_loader.prime_many({str(user["_id"]): user for user in users})
     logger.info("Primed users in DataLoader")
@@ -31,9 +69,7 @@ async def get_users(fields: list[Any], user_loader: DataLoader) -> list[User]:
 async def get_user_by_id(
     id: strawberry.ID, fields: list[Any], user_loader: DataLoader
 ) -> User:
-    # logger.info(f"Fetching user with ID: {id} and fields: {fields}")
     user_data = await user_loader.load((str(id), fields))
-    logger.info(f"Fetched user data: {user_data}")
     if not user_data:
         raise ValueError(f"User with ID {id} not found.")
     return User.model_validate(user_data)
@@ -55,7 +91,7 @@ async def get_user_orders(user: "UserType", fields: list[Any]) -> list[Order]:
     projection = build_projection(fields)
     aggregation_pipeline = [{"$project": projection}]
     orders = (
-        await Order.find(Order.user_id == str(user.id))
+        await Order.find(Order.user_id == ObjectId(user.id))
         .aggregate(aggregation_pipeline)
         .to_list()
     )

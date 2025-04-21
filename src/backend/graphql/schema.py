@@ -5,4 +5,8 @@ import strawberry
 from backend.graphql.mutations import Mutation
 from backend.graphql.queries import Query
 
-graphql_schema = strawberry.Schema(query=Query, mutation=Mutation)
+from strawberry.extensions.tracing import ApolloTracingExtension
+
+graphql_schema = strawberry.Schema(
+    query=Query, mutation=Mutation, extensions=[ApolloTracingExtension]
+)

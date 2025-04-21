@@ -8,6 +8,14 @@ from bson.errors import InvalidId
 from strawberry.types.nodes import SelectedField
 from strawberry.utils.str_converters import to_snake_case
 
+from backend.graphql.types.filter import (
+    FilterInput,
+    LogicalFilterInput,
+)
+from backend.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 
 def _extract_subfields(selection: SelectedField) -> dict[str, Any]:
     """Extracts subfields from a GraphQL selection.
@@ -130,3 +138,153 @@ def is_field_missing(field: str, cached_data: dict) -> bool:
             return True
 
     return False
+
+
+def build_query_from_filters(
+    filters: Optional["LogicalFilterInput"],
+) -> dict[str, Any]:
+    """Recursively build a MongoDB query from LogicalFilterInput.
+
+    Args:
+        filters (Optional[LogicalFilterInput]): Filters to apply.
+
+    Returns:
+        dict[str, Any]: MongoDB query.
+    """
+    if not filters:
+        return {}
+
+    query: dict[str, Any] = {}
+
+    if filters.filter:
+        field = filters.filter.field
+        operation = filters.filter.operation
+        value = filters.filter.value
+
+        query[field] = {operation.value: value}
+
+    if filters.and_:
+        query["$and"] = [build_query_from_filters(f) for f in filters.and_]
+
+    if filters.or_:
+        query["$or"] = [build_query_from_filters(f) for f in filters.or_]
+
+    return query
+
+
+def extract_filters_by_prefixes(
+    filters: Optional[LogicalFilterInput], prefixes: list[str]
+) -> tuple[Optional[LogicalFilterInput], ...]:
+    """
+    Extracts filters based on a list of prefixes from the LogicalFilterInput.
+
+    Args:
+        filters (Optional[LogicalFilterInput]): The input filters.
+        prefixes (list[str]): A list of prefixes to identify specific filters.
+
+    Returns:
+        tuple[Optional[LogicalFilterInput], ...]:
+            - A tuple of extracted filters for each prefix in the
+            order of the prefixes.
+            - The last element in the tuple is the remaining filters.
+    """
+    if not filters:
+        return tuple(None for _ in prefixes) + (None,)
+
+    remaining_filters = LogicalFilterInput()
+    prefixed_filters_list = [LogicalFilterInput() for _ in prefixes]
+
+    def match_prefix(field: str) -> Optional[int]:
+        for i, prefix in enumerate(prefixes):
+            if field.startswith(prefix):
+                return i
+        return None
+
+    if filters.filter:
+        matched_index = match_prefix(filters.filter.field)
+        if matched_index is not None:
+            prefixed_filters_list[matched_index].filter = FilterInput(
+                field=filters.filter.field[len(prefixes[matched_index]):],
+                operation=filters.filter.operation,
+                value=filters.filter.value,
+            )
+        else:
+            remaining_filters.filter = filters.filter
+
+    if filters.and_:
+        remaining_and_filters = []
+        prefixed_and_filters_list = [[] for _ in prefixes]  # type: ignore
+        for sub_filter in filters.and_:
+            sub_results = extract_filters_by_prefixes(sub_filter, prefixes)
+            for i, pf in enumerate(sub_results[:-1]):
+                if pf:
+                    prefixed_and_filters_list[i].append(pf)
+            if sub_results[-1]:
+                remaining_and_filters.append(sub_results[-1])
+        if remaining_and_filters:
+            remaining_filters.and_ = remaining_and_filters
+        for i, prefixed_and_filters in enumerate(prefixed_and_filters_list):
+            if prefixed_and_filters:
+                prefixed_filters_list[i].and_ = prefixed_and_filters
+
+    if filters.or_:
+        remaining_or_filters = []
+        prefixed_or_filters_list = [[] for _ in prefixes]  # type: ignore
+        for sub_filter in filters.or_:
+            sub_results = extract_filters_by_prefixes(sub_filter, prefixes)
+            for i, pf in enumerate(sub_results[:-1]):
+                if pf:
+                    prefixed_or_filters_list[i].append(pf)
+            if sub_results[-1]:
+                remaining_or_filters.append(sub_results[-1])
+        if remaining_or_filters:
+            remaining_filters.or_ = remaining_or_filters
+        for i, prefixed_or_filters in enumerate(prefixed_or_filters_list):
+            if prefixed_or_filters:
+                prefixed_filters_list[i].or_ = prefixed_or_filters
+
+    if filters.not_:
+        sub_results = extract_filters_by_prefixes(filters.not_, prefixes)
+        for i, pf in enumerate(sub_results[:-1]):
+            if pf:
+                prefixed_filters_list[i].not_ = pf
+        if sub_results[-1]:
+            remaining_filters.not_ = sub_results[-1]
+
+    return tuple(
+        pf if pf.filter or pf.and_ or pf.or_ or pf.not_ else None
+        for pf in prefixed_filters_list
+    ) + (
+        (
+            remaining_filters
+            if remaining_filters.filter
+            or remaining_filters.and_
+            or remaining_filters.or_
+            or remaining_filters.not_
+            else None
+        ),
+    )
+
+
+def build_filter_aggregation_pipeline(
+    look_up_fields: tuple[str, str, str, str],
+    filters: Optional["LogicalFilterInput"],
+    aggregation_pipeline: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    from_collection, local_field, foreign_field, as_field = look_up_fields
+    secondary_filter_query = build_query_from_filters(filters)
+    aggregation_pipeline.append(
+        {
+            "$lookup": {
+                "from": from_collection,
+                "localField": local_field,
+                "foreignField": foreign_field,
+                "as": as_field,
+                "pipeline": [
+                    {"$match": secondary_filter_query},
+                ],
+            }
+        },
+    )
+    aggregation_pipeline.append({"$match": {as_field: {"$ne": []}}})
+    return aggregation_pipeline
