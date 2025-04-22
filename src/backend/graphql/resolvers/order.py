@@ -32,7 +32,7 @@ async def get_orders(
     fields: list[Any],
     order_loader: DataLoader,
     filters: Optional["LogicalFilterInput"] = None,
-) -> list[Order]:
+) -> list[dict[str, Any]]:
     """Fetch all orders with specified fields.
 
     Args:
@@ -44,8 +44,7 @@ async def get_orders(
     """
     logger.info(f"Fetching all orders with fields: {fields}")
     projection = build_projection(fields)
-    aggregation_pipeline = []
-    # aggregation_pipeline = [{"$project": projection}]
+    aggregation_pipeline = [{"$project": projection}]
 
     if filters:
         (
@@ -58,43 +57,68 @@ async def get_orders(
         )
         order_filter_query = build_query_from_filters(order_filters)
         aggregation_pipeline.append({"$match": order_filter_query})
-        if product_filters or review_filters:
+        # logger.info(f"User Filters: {user_filters}")
+        # logger.info(f"Order Filters: {order_filters}")
+        # logger.info(f"Product Filters: {product_filters}")
+        # logger.info(f"Review Filters: {review_filters}")
+    else:
+        user_filters, review_filters, product_filters, order_filters = (
+            None,
+            None,
+            None,
+            None,
+        )
+    if (
+        product_filters
+        or review_filters
+        or any(filter.startswith("items.product.") for filter in projection)
+    ):
+        aggregation_pipeline = build_filter_aggregation_pipeline(
+            ("products", "items.product_id", "_id", "products"),
+            product_filters,
+            aggregation_pipeline,
+        )
+        if review_filters or any(
+            filter.startswith("items.product.review.") for filter in projection
+        ):
             aggregation_pipeline = build_filter_aggregation_pipeline(
-                ("products", "items.product_id", "_id", "products"),
-                product_filters,
+                (
+                    "reviews",
+                    "items.product_id",
+                    "product_id",
+                    "reviews",
+                ),
+                review_filters,
                 aggregation_pipeline,
             )
-            if review_filters:
-                aggregation_pipeline = build_filter_aggregation_pipeline(
-                    ("reviews", "products.review_ids", "_id", "reviews"),
-                    review_filters,
-                    aggregation_pipeline,
-                )
-        if user_filters:
-            aggregation_pipeline = build_filter_aggregation_pipeline(
-                ("users", "user_id", "_id", "users"),
-                user_filters,
-                aggregation_pipeline,
-            )
-    aggregation_pipeline.append(
-        {
-            "$project": {
-                field: 1
-                for field in projection
-                if not (
-                    field.startswith("user.")
-                    or field.startswith("items.product.")
-                )
-            }
-        }
-    )
+    if user_filters or any(
+        filter.startswith("user.") for filter in projection
+    ):
+        aggregation_pipeline = build_filter_aggregation_pipeline(
+            ("users", "user_id", "_id", "users"),
+            user_filters,
+            aggregation_pipeline,
+        )
+    # aggregation_pipeline.append(
+    #     {
+    #         "$project": {
+    #             field: 1
+    #             for field in projection
+    #             if not (
+    #                 field.startswith("user.")
+    #                 or field.startswith("items.product.")
+    #             )
+    #         }
+    #     }
+    # )
 
     logger.info(f"Aggregation pipeline: {aggregation_pipeline}")
     orders = await Order.find_all().aggregate(aggregation_pipeline).to_list()
     logger.info(f"Orders fetched: {orders[0]}")
     order_loader.prime_many({str(order["_id"]): order for order in orders})
     logger.info("Primed orders in DataLoader")
-    return [Order.model_validate(order) for order in orders]
+    # return [Order.model_validate(order) for order in orders]
+    return orders
 
 
 async def get_order_by_id(

@@ -8,9 +8,9 @@ from backend.graphql.resolvers.order import get_order_by_id, get_orders
 from backend.graphql.resolvers.product import get_product_by_id, get_products
 from backend.graphql.resolvers.user import get_user_by_id, get_users
 from backend.graphql.types.filter import LogicalFilterInput
-from backend.graphql.types.order import Order
+from backend.graphql.types.order import Order, OrderItem, OrderStatus
 from backend.graphql.types.product import Product
-from backend.graphql.types.user import User
+from backend.graphql.types.user import User, Profile
 from backend.models.order import Order as OrderModel
 from backend.models.product import Product as ProductModel
 from backend.models.user import User as UserModel
@@ -39,10 +39,71 @@ class Query:
         self,
         info: strawberry.Info,
         filters: Optional[LogicalFilterInput] = None,
-    ) -> list[OrderModel]:
-        return await get_orders(
+    ) -> list[Order]:
+        orders = await get_orders(
             extract_fields(info), info.context["order_loader"], filters=filters
         )
+        return [
+            Order(
+                id=data.get("_id"),
+                user_id=data.get("user_id"),
+                items=(
+                    [
+                        OrderItem(
+                            product_id=item.get("product_id"),
+                            quantity=item.get("quantity"),
+                            product=(
+                                Product(
+                                    id=product.get("_id"),
+                                    name=product.get("name"),
+                                    price=product.get("price"),
+                                )
+                                if (
+                                    product := next(
+                                        (
+                                            p
+                                            for p in data.get("products", [])
+                                            if p["_id"]
+                                            == item.get("product_id")
+                                        ),
+                                        None,
+                                    )
+                                )
+                                else None
+                            ),
+                        )
+                        for item in data.get("items", [])
+                    ]
+                    if data.get("items")
+                    else None
+                ),
+                status=(
+                    OrderStatus(data.get("status"))
+                    if data.get("status")
+                    else None
+                ),
+                user=(
+                    User(
+                        id=user.get("_id"),
+                        name=user.get("name"),
+                        email=user.get("email"),
+                        profile=(
+                            Profile(
+                                age=user.get("profile", {}).get("age"),
+                                location=user.get("profile", {}).get(
+                                    "location"
+                                ),
+                            )
+                            if user.get("profile")
+                            else None
+                        ),
+                    )
+                    if (user := next(iter(data.get("users", [])), None))
+                    else None
+                ),
+            )
+            for data in orders
+        ]
 
     @strawberry.field(graphql_type=list[Product])
     async def products(

@@ -36,29 +36,32 @@ class OrderItem:
 
     product_id: strawberry.Private[strawberry.ID]
     quantity: Optional[int]
+    product: Optional[
+        Annotated["Product", strawberry.lazy("backend.graphql.types.product")]
+    ]
 
-    @strawberry.field(
-        graphql_type=Optional[
-            Annotated[
-                "Product", strawberry.lazy("backend.graphql.types.product")
-            ]
-        ]
-    )
-    async def product(self, info: strawberry.Info) -> Optional[ProductModel]:
-        """Fetch product by ID.
-        This function is used to resolve the product field in the OrderItem.
+    # @strawberry.field(
+    #     graphql_type=Optional[
+    #         Annotated[
+    #             "Product", strawberry.lazy("backend.graphql.types.product")
+    #         ]
+    #     ]
+    # )
+    # async def product(self, info: strawberry.Info) -> Optional[ProductModel]:
+    #     """Fetch product by ID.
+    #     This function is used to resolve the product field in the OrderItem.
 
-        Args:
-            info (strawberry.Info): GraphQL info object.
+    #     Args:
+    #         info (strawberry.Info): GraphQL info object.
 
-        Returns:
-            Optional[ProductModel]: ProductModel object or None.
-        """
-        return await get_product_by_id(
-            self.product_id,
-            extract_fields(info),
-            info.context["product_loader"],
-        )
+    #     Returns:
+    #         Optional[ProductModel]: ProductModel object or None.
+    #     """
+    #     return await get_product_by_id(
+    #         self.product_id,
+    #         extract_fields(info),
+    #         info.context["product_loader"],
+    #     )
 
 
 @strawberry.type
@@ -69,25 +72,28 @@ class Order:
     user_id: strawberry.Private[strawberry.ID]
     items: Optional[List["OrderItem"]]
     status: Optional["OrderStatus"]
+    user: Optional[
+        Annotated["User", strawberry.lazy("backend.graphql.types.user")]
+    ]
 
-    @strawberry.field(
-        graphql_type=Optional[
-            Annotated["User", strawberry.lazy("backend.graphql.types.user")]
-        ]
-    )
-    async def user(self, info: strawberry.Info) -> Optional[UserModel]:
-        """Fetch user by ID.
-        This function is used to resolve the user field in the Order object.
+    # @strawberry.field(
+    #     graphql_type=Optional[
+    #         Annotated["User", strawberry.lazy("backend.graphql.types.user")]
+    #     ]
+    # )
+    # async def user(self, info: strawberry.Info) -> Optional[UserModel]:
+    #     """Fetch user by ID.
+    #     This function is used to resolve the user field in the Order object.
 
-        Args:
-            info (strawberry.Info): GraphQL info object.
+    #     Args:
+    #         info (strawberry.Info): GraphQL info object.
 
-        Returns:
-            Optional[UserModel]: UserModel object or None.
-        """
-        return await get_user_by_id(
-            self.user_id, extract_fields(info), info.context["user_loader"]
-        )
+    #     Returns:
+    #         Optional[UserModel]: UserModel object or None.
+    #     """
+    #     return await get_user_by_id(
+    #         self.user_id, extract_fields(info), info.context["user_loader"]
+    #     )
 
 
 @strawberry.input

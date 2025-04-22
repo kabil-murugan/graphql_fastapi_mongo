@@ -272,19 +272,32 @@ def build_filter_aggregation_pipeline(
     aggregation_pipeline: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     from_collection, local_field, foreign_field, as_field = look_up_fields
-    secondary_filter_query = build_query_from_filters(filters)
-    aggregation_pipeline.append(
-        {
-            "$lookup": {
-                "from": from_collection,
-                "localField": local_field,
-                "foreignField": foreign_field,
-                "as": as_field,
-                "pipeline": [
-                    {"$match": secondary_filter_query},
-                ],
+    if filters:
+        secondary_filter_query = build_query_from_filters(filters)
+        aggregation_pipeline.append(
+            {
+                "$lookup": {
+                    "from": from_collection,
+                    "localField": local_field,
+                    "foreignField": foreign_field,
+                    "as": as_field,
+                    "pipeline": [
+                        {"$match": secondary_filter_query},
+                    ],
+                }
+            },
+        )
+        aggregation_pipeline.append({"$match": {as_field: {"$ne": []}}})
+        return aggregation_pipeline
+    else:
+        aggregation_pipeline.append(
+            {
+                "$lookup": {
+                    "from": from_collection,
+                    "localField": local_field,
+                    "foreignField": foreign_field,
+                    "as": as_field,
+                },
             }
-        },
-    )
-    aggregation_pipeline.append({"$match": {as_field: {"$ne": []}}})
-    return aggregation_pipeline
+        )
+        return aggregation_pipeline
