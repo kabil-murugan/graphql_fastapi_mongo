@@ -6,6 +6,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from backend.core.config import settings
 from backend.models.order import Order
 from backend.models.product import Product
+from backend.models.review import Review
 from backend.models.user import User
 from backend.utils.logger import get_logger
 
@@ -26,7 +27,7 @@ async def init_db() -> AsyncIOMotorClient:
         client: AsyncIOMotorClient = AsyncIOMotorClient(settings.mongo_url)
         await init_beanie(
             database=client[settings.mongo_db],
-            document_models=[User, Order, Product],
+            document_models=[User, Order, Product, Review],
         )
         logger.info("Database initialized successfully.")
         return client

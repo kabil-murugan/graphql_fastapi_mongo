@@ -3,7 +3,6 @@
 from typing import Any, Optional
 
 import strawberry
-from beanie import PydanticObjectId
 from bson import ObjectId
 from bson.errors import InvalidId
 
@@ -12,10 +11,10 @@ from backend.models.product import Product
 from backend.models.review import Review
 from backend.utils.logger import get_logger
 from backend.utils.utils import (
+    build_filter_aggregation_pipeline,
     build_projection,
     build_query_from_filters,
     extract_filters_by_prefixes,
-    build_filter_aggregation_pipeline,
 )
 
 logger = get_logger(__name__)
@@ -98,7 +97,7 @@ async def get_product_reviews(
     projection = build_projection(fields)
     aggregation_pipeline = [{"$project": projection}]
     reviews = (
-        await Review.find(Review.product_id == PydanticObjectId(product_id))
+        await Review.find({"_id": ObjectId(product_id)})
         .aggregate(aggregation_pipeline)
         .to_list()
     )

@@ -43,8 +43,6 @@ async def get_orders(
         list[Order]: List of Order objects with the specified fields.
     """
     logger.info(f"Fetching all orders with fields: {fields}")
-    projection = build_projection(fields)
-    aggregation_pipeline = [{"$project": projection}]
 
     if filters:
         (
@@ -53,11 +51,12 @@ async def get_orders(
             product_filters,
             order_filters,
         ) = extract_filters_by_prefixes(
-            filters, ["user.", "items.product.reviews", "items.product."]
+            filters, ["user.", "items.product.reviews.", "items.product."]
         )
         order_filter_query = build_query_from_filters(order_filters)
         aggregation_pipeline = [
             {"$match": order_filter_query},
+            {"$project": build_projection(fields)},
         ]
         if product_filters or review_filters:
             aggregation_pipeline = build_filter_aggregation_pipeline(
@@ -77,6 +76,10 @@ async def get_orders(
                 user_filters,
                 aggregation_pipeline,
             )
+    else:
+        aggregation_pipeline = [
+            {"$project": build_projection(fields)},
+        ]
 
     logger.info(f"Aggregation pipeline: {aggregation_pipeline}")
     orders = await Order.find_all().aggregate(aggregation_pipeline).to_list()

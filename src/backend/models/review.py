@@ -10,8 +10,8 @@ from pydantic import Field
 class Review(Document):
     """Review model for storing product reviews."""
 
-    product_id: Optional[PydanticObjectId] = Field(None)
-    user_id: Optional[PydanticObjectId] = Field(None)
+    product_id: PydanticObjectId
+    user_id: PydanticObjectId
     rating: Optional[int] = Field(None, ge=1, le=5)
     comment: Optional[str] = Field(None)
     created_at: Optional[datetime] = Field(
