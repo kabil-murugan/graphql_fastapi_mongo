@@ -85,9 +85,9 @@ class TestResult:
     id: strawberry.ID
     name: Optional[str]
     test_id: strawberry.ID  # Test reference
-    test_data: Optional[TestData]
+    test: Optional[TestData]
     test_plan_id: strawberry.ID  # Test Plan reference
-    test_plan_data: Optional[TestPlanData]
+    test_plan: Optional[TestPlanData]
     start_time: Optional[datetime]
     end_time: Optional[datetime]
     test_result_values: Optional[list[TestResultValue]]

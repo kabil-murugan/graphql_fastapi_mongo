@@ -53,7 +53,7 @@ class TestPlan:
     name: Optional[str]
     schema_test_plan_condition: Optional[str]
     test_id: strawberry.Private[strawberry.ID]
-    test_data: Optional[TestData]
+    test: Optional[TestData]
     test_planning_notes: Optional[str]
     test_planned_values: Optional[list[TestPlanValue]]
     created_by: Optional[User]
