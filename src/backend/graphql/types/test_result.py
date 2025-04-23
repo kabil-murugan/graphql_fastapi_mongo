@@ -1,33 +1,18 @@
 """Object Types for Test Results."""
 
 from datetime import datetime
-from enum import Enum
 from typing import Optional
 
 import strawberry
 
-from backend.graphql.types.common import VALUE, TestData, User
+from backend.graphql.types.common import (
+    VALUE,
+    ParamGroupTypeEnum,
+    TestData,
+    TestStatusEnum,
+    User,
+)
 from backend.graphql.types.test_plan import TestPlanValue
-
-
-@strawberry.enum
-class TestStatusEnum(Enum):
-    """Enum for Test Status."""
-
-    PENDING = "PENDING"
-    IN_PROGRESS = "IN_PROGRESS"
-    COMPLETED = "COMPLETED"
-    FAILED = "FAILED"
-    CANCELLED = "CANCELLED"
-
-
-@strawberry.enum
-class ParamGroupTypeEnum(Enum):
-    """Enum for Test Group Type."""
-
-    TYPE_A = "TYPE_A"
-    TYPE_B = "TYPE_B"
-    TYPE_C = "TYPE_C"
 
 
 @strawberry.type

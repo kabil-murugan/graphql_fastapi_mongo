@@ -35,4 +35,5 @@ async def get_tests(
         test_filter_query = build_query_from_filters(filters)
         aggregation_pipeline.append({"$match": test_filter_query})
     tests = await Test.find_all().aggregate(aggregation_pipeline).to_list()
+    logger.info(f"Pipeline: {aggregation_pipeline}")
     return [Test.model_validate(test) for test in tests]

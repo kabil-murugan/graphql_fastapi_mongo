@@ -1,21 +1,16 @@
 """Object Types for Test Plans."""
 
 from datetime import datetime
-from enum import Enum
 from typing import Optional
 
 import strawberry
 
-from backend.graphql.types.common import VALUE, TestData, User
-
-
-@strawberry.enum
-class ParamGroupTypeEnum(Enum):
-    """Enum for Test Plan Group Type."""
-
-    TYPE_A = "TYPE_A"
-    TYPE_B = "TYPE_B"
-    TYPE_C = "TYPE_C"
+from backend.graphql.types.common import (
+    VALUE,
+    ParamGroupTypeEnum,
+    TestData,
+    User,
+)
 
 
 @strawberry.type

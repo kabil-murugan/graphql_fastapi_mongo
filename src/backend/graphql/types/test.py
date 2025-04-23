@@ -6,7 +6,7 @@ from typing import Optional
 
 import strawberry
 
-from backend.graphql.types.common import User
+from backend.graphql.types.common import TestStatusEnum, User
 
 
 @strawberry.enum
@@ -18,17 +18,6 @@ class TestTypeEnum(Enum):
     INTEGRATION = "INTEGRATION"
     REGRESSION = "REGRESSION"
     UNIT = "UNIT"
-
-
-@strawberry.enum
-class TestStatusEnum(Enum):
-    """Test Status Enum."""
-
-    PENDING = "PENDING"
-    IN_PROGRESS = "IN_PROGRESS"
-    COMPLETED = "COMPLETED"
-    FAILED = "FAILED"
-    CANCELLED = "CANCELLED"
 
 
 @strawberry.type

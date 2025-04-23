@@ -37,7 +37,11 @@ class Query:
         Returns:
             list[Test]: List of Test objects.
         """
-        return await perform_resolving_action(info, get_tests, filters=filters)
+        tests = await perform_resolving_action(
+            info, get_tests, filters=filters
+        )
+        logger.info(f"Tests: {tests}")
+        return tests
 
     @strawberry.field(graphql_type=list[TestPlan])
     async def test_plans(

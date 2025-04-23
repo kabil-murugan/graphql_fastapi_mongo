@@ -21,6 +21,26 @@ class User:
     email: Optional[str]
 
 
+@strawberry.enum
+class TestStatusEnum(Enum):
+    """Enum for Test Status."""
+
+    PENDING = "PENDING"
+    IN_PROGRESS = "IN_PROGRESS"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
+
+
+@strawberry.enum
+class ParamGroupTypeEnum(Enum):
+    """Enum for Test Plan Group Type."""
+
+    TYPE_A = "TYPE_A"
+    TYPE_B = "TYPE_B"
+    TYPE_C = "TYPE_C"
+
+
 @strawberry.type
 class TestData:
     """Test Data."""
