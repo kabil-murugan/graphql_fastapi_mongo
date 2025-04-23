@@ -2,9 +2,11 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional, Union
+from typing import Optional
 
 import strawberry
+
+from backend.graphql.types.common import VALUE, User
 
 
 @strawberry.enum
@@ -17,14 +19,6 @@ class ParamGroupTypeEnum(Enum):
 
 
 @strawberry.type
-class User:
-    """User Object Type."""
-
-    name: Optional[str]
-    email: Optional[str]
-
-
-@strawberry.type
 class TestPlanValue:
     """Test Plan Value Object Type."""
 
@@ -33,7 +27,7 @@ class TestPlanValue:
     test_plan_Group_type: Optional[ParamGroupTypeEnum]
     test_plan_Group_name: Optional[str]
     test_plan_Name: Optional[str]
-    test_plan_Value: Optional[Union[str, float]]
+    test_plan_Value: VALUE  # type: ignore
     unit: Optional[str]
 
 

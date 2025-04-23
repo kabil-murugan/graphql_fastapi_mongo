@@ -13,6 +13,14 @@ VALUE = strawberry.scalar(
 )
 
 
+@strawberry.type
+class User:
+    """User Object Type."""
+
+    name: Optional[str]
+    email: Optional[str]
+
+
 @strawberry.enum
 class FilterOperator(Enum):
     """Filter Operator Enum."""

@@ -10,7 +10,7 @@ from backend.utils.utils import (
 )
 
 if TYPE_CHECKING:
-    from backend.graphql.types.filter import LogicalFilterInput
+    from backend.graphql.types.common import LogicalFilterInput
 
 logger = get_logger(__name__)
 

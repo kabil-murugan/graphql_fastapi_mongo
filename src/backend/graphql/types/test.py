@@ -6,6 +6,8 @@ from typing import Optional
 
 import strawberry
 
+from backend.graphql.types.common import User
+
 
 @strawberry.enum
 class TestTypeEnum(Enum):
@@ -27,14 +29,6 @@ class TestStatusEnum(Enum):
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
     CANCELLED = "CANCELLED"
-
-
-@strawberry.type
-class User:
-    """User Object Type."""
-
-    name: Optional[str]
-    email: Optional[str]
 
 
 @strawberry.type

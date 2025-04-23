@@ -7,7 +7,7 @@ import strawberry
 from backend.graphql.resolvers.test import get_tests
 from backend.graphql.resolvers.test_plan import get_test_plans
 from backend.graphql.resolvers.test_result import get_test_results
-from backend.graphql.types.filter import LogicalFilterInput
+from backend.graphql.types.common import LogicalFilterInput
 from backend.graphql.types.test import Test
 from backend.graphql.types.test_plan import TestPlan
 from backend.graphql.types.test_result import TestResult

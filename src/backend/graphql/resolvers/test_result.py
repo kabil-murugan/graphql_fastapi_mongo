@@ -2,7 +2,7 @@
 
 from typing import Any, Optional
 
-from backend.graphql.types.filter import LogicalFilterInput
+from backend.graphql.types.common import LogicalFilterInput
 from backend.models.test_result import TestResult
 from backend.utils.logger import get_logger
 from backend.utils.utils import (

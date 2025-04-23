@@ -8,7 +8,7 @@ from bson.errors import InvalidId
 from strawberry.types.nodes import SelectedField
 from strawberry.utils.str_converters import to_snake_case
 
-from backend.graphql.types.filter import (
+from backend.graphql.types.common import (
     FilterInput,
     LogicalFilterInput,
 )
