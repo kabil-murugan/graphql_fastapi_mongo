@@ -1,0 +1,104 @@
+"""Object Types for Test Results."""
+
+from datetime import datetime
+from enum import Enum
+from typing import Optional, Union
+
+import strawberry
+
+from backend.graphql.types.test_plan import TestPlanValue
+
+
+@strawberry.enum
+class TestStatusEnum(Enum):
+    """Enum for Test Status."""
+
+    PENDING = "PENDING"
+    IN_PROGRESS = "IN_PROGRESS"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
+
+
+@strawberry.enum
+class ParamGroupTypeEnum(Enum):
+    """Enum for Test Group Type."""
+
+    TYPE_A = "TYPE_A"
+    TYPE_B = "TYPE_B"
+    TYPE_C = "TYPE_C"
+
+
+@strawberry.type
+class User:
+    """User Object Type."""
+
+    name: Optional[str]
+    email: Optional[str]
+
+
+@strawberry.type
+class SampleOffset:
+    """Sample Offset Object Type."""
+
+    id: strawberry.ID
+    start_time: Optional[datetime]
+    end_time: Optional[datetime]
+    start_pos: Optional[float]
+    end_pos: Optional[float]
+
+
+@strawberry.type
+class TestResultValue:
+    """Test Result Value Object Type."""
+
+    id: strawberry.ID
+    test_result_Group_id: strawberry.ID
+    test_result_Group_type: Optional[ParamGroupTypeEnum]
+    test_result_Group_name: Optional[str]
+    test_result_Name: Optional[str]
+    test_result_Value: Optional[Union[str, float]]
+    unit: Optional[str]
+
+
+@strawberry.type
+class TestData:
+    """Test Data."""
+
+    id: strawberry.ID
+    name: Optional[str]
+
+
+@strawberry.type
+class TestPlanData:
+    """Test Plan data."""
+
+    id: strawberry.ID
+    name: Optional[str]
+    planned_values: Optional[list[TestPlanValue]]
+
+
+@strawberry.type
+class TestResult:
+    """Test Result Object Type."""
+
+    id: strawberry.ID
+    name: Optional[str]
+    test_id: strawberry.ID  # Test reference
+    test_data: Optional[TestData]
+    test_plan_id: strawberry.ID  # Test Plan reference
+    test_plan_data: Optional[TestPlanData]
+    start_time: Optional[datetime]
+    end_time: Optional[datetime]
+    test_result_values: Optional[list[TestResultValue]]
+    test_plan_time: Optional[datetime]
+    start_position: Optional[float]
+    end_position: Optional[float]
+    status: Optional[TestStatusEnum]
+    sensor_offsets: Optional[list[SampleOffset]]
+    equipment_offsets: Optional[list[SampleOffset]]
+    version: Optional[int]
+    created_at: Optional[datetime]
+    modified_at: Optional[datetime]
+    created_by: Optional[User]
+    modified_by: Optional[User]

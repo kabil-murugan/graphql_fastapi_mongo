@@ -1,9 +1,9 @@
 """Schema for the GraphQL API."""
 
 import strawberry
+from strawberry.extensions.tracing import ApolloTracingExtension
 
 from backend.graphql.queries import Query
-from strawberry.extensions.tracing import ApolloTracingExtension
 
 graphql_schema = strawberry.Schema(
     query=Query,
