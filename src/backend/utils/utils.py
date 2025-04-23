@@ -12,9 +12,6 @@ from backend.graphql.types.filter import (
     FilterInput,
     LogicalFilterInput,
 )
-from backend.utils.logger import get_logger
-
-logger = get_logger(__name__)
 
 
 def _extract_subfields(selection: SelectedField) -> dict[str, Any]:

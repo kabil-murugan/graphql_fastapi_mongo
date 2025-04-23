@@ -1,31 +1,67 @@
-"""Generate and validate GraphQL query."""
+"""Generate and validate GraphQL query with dynamic few-shot prompting."""
 
+from llama_index.core import Settings, VectorStoreIndex
 from llama_index.llms.openai import OpenAI
+from llama_index.core.prompts import RichPromptTemplate
 import strawberry
 from backend.utils.logger import get_logger
+from backend.db.example_nodes import EXAMPLE_NODES
+
+logger = get_logger(__name__)
+
+Settings.llm = OpenAI(model="gpt-4.1")
 
 
+index = VectorStoreIndex(nodes=EXAMPLE_NODES)
+retriever = index.as_retriever(similarity_top_k=2)
 
-PROMPT_TEMPLATE = """
-You are an assistant that converts natural language queries into GraphQL 
-queries. \n Here is the GraphQL schema:
 
-{schema}
+PROMPT_TEMPLATE_STR = """
+You are a GraphQL expert. You are an assistant that converts natural language
+queries into GraphQL queries. You must strictly follow the provided
+GraphQL schema and generate queries based on it.
 
-Now, convert the following natural language query into a valid GraphQL query:
+Here is the GraphQL schema you should use:
+<schema>
+{{ schema }}
+</schema>
 
-"{query}"
+Here are some examples of how you should convert natural language to GraphQL:
+<examples>
+{{ examples }}
+</examples>
+
+Now it's your turn.
+
+Query: {{ query_str }}
+GraphQL:
 """
 
 
-def generate_graphql_query(natural_language_query: str, schema: str) -> str:
-    """Generate a GraphQL query from a natural language query."""
-    prompt = PROMPT_TEMPLATE.format(
-        schema=schema, query=natural_language_query
+def get_examples_fn(**kwargs):
+    """Retrieve relevant examples based on the input query."""
+    query = kwargs["query_str"]
+    examples = retriever.retrieve(query)
+    return "\n\n".join(node.text for node in examples)
+
+
+prompt_template = RichPromptTemplate(
+    PROMPT_TEMPLATE_STR,
+    function_mappings={"examples": get_examples_fn},
+)
+
+
+async def generate_graphql_query(
+    natural_language_query: str, schema: str
+) -> str:
+    """Generate a GraphQL query using dynamic few-shot prompting."""
+    prompt = prompt_template.format(
+        query_str=natural_language_query,
+        schema=schema,
     )
-    llm = OpenAI(model="gpt-4.1")
-    response = llm.complete(prompt)
-    logger.info(f"")
+
+    llm = Settings.llm
+    response = await llm.acomplete(prompt)
     return response.text.strip()
 
 
