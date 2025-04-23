@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Annotated, Optional
 import strawberry
 
 from backend.graphql.resolvers.user import get_user_orders
-from backend.models.order import Order as OrderModel
+from backend.models.test_plan import Order as OrderModel
 from backend.utils.logger import get_logger
 from backend.utils.utils import perform_resolving_action
 

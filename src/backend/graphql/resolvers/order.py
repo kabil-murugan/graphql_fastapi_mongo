@@ -8,11 +8,11 @@ from bson import ObjectId
 from bson.errors import InvalidId
 
 from backend.graphql.types.order import OrderItemInput, OrderStatus
-from backend.models.order import (
+from backend.models.test_plan import (
     Order,
     OrderItem,
 )
-from backend.models.order import (
+from backend.models.test_plan import (
     OrderStatus as OrderStatusModel,
 )
 from backend.utils.logger import get_logger

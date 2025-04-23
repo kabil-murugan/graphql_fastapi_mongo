@@ -7,7 +7,7 @@ import strawberry
 
 from backend.graphql.resolvers.product import get_product_by_id
 from backend.graphql.resolvers.user import get_user_by_id
-from backend.models.product import Product as ProductModel
+from backend.models.test import Product as ProductModel
 from backend.models.user import User as UserModel
 from backend.utils.utils import perform_resolving_action
 

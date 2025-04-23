@@ -13,9 +13,9 @@ from backend.graphql.types.order import Order
 from backend.graphql.types.product import Product
 from backend.graphql.types.review import Review
 from backend.graphql.types.user import User
-from backend.models.order import Order as OrderModel
-from backend.models.product import Product as ProductModel
-from backend.models.review import Review as ReviewModel
+from backend.models.test_plan import Order as OrderModel
+from backend.models.test import Product as ProductModel
+from backend.models.test_result import Review as ReviewModel
 from backend.models.user import User as UserOutput, User as UserModel
 from backend.utils.logger import get_logger
 from backend.utils.utils import perform_resolving_action

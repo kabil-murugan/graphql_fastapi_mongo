@@ -7,8 +7,8 @@ from bson import ObjectId
 from bson.errors import InvalidId
 
 from backend.graphql.types.filter import LogicalFilterInput
-from backend.models.product import Product
-from backend.models.review import Review
+from backend.models.test import Product
+from backend.models.test_result import Review
 from backend.utils.logger import get_logger
 from backend.utils.utils import (
     build_filter_aggregation_pipeline,

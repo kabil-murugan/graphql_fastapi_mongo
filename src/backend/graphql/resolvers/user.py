@@ -6,7 +6,7 @@ import strawberry
 from bson import ObjectId
 from bson.errors import InvalidId
 
-from backend.models.order import Order
+from backend.models.test_plan import Order
 from backend.models.user import Profile, User
 from backend.utils.logger import get_logger
 from backend.utils.utils import (
