@@ -6,7 +6,7 @@ from typing import Optional
 
 import strawberry
 
-from backend.graphql.types.common import VALUE, User
+from backend.graphql.types.common import VALUE, TestData, User
 
 
 @strawberry.enum
@@ -29,14 +29,6 @@ class TestPlanValue:
     test_plan_Name: Optional[str]
     test_plan_Value: VALUE  # type: ignore
     unit: Optional[str]
-
-
-@strawberry.type
-class TestData:
-    """Test Data."""
-
-    id: strawberry.ID
-    name: Optional[str]
 
 
 @strawberry.type

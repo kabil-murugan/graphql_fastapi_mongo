@@ -21,6 +21,14 @@ class User:
     email: Optional[str]
 
 
+@strawberry.type
+class TestData:
+    """Test Data."""
+
+    id: strawberry.ID
+    name: Optional[str]
+
+
 @strawberry.enum
 class FilterOperator(Enum):
     """Filter Operator Enum."""

@@ -6,7 +6,7 @@ from typing import Optional
 
 import strawberry
 
-from backend.graphql.types.common import VALUE, User
+from backend.graphql.types.common import VALUE, TestData, User
 from backend.graphql.types.test_plan import TestPlanValue
 
 
@@ -52,14 +52,6 @@ class TestResultValue:
     test_result_Name: Optional[str]
     test_result_Value: VALUE  # type: ignore
     unit: Optional[str]
-
-
-@strawberry.type
-class TestData:
-    """Test Data."""
-
-    id: strawberry.ID
-    name: Optional[str]
 
 
 @strawberry.type
