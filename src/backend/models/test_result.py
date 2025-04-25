@@ -2,10 +2,12 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Union
+from typing import Optional, Union
 
 from beanie import Document, PydanticObjectId
 from pydantic import BaseModel
+
+from backend.models.test_plan import TestPlanValue
 
 
 class TestStatus(str, Enum):
@@ -29,52 +31,74 @@ class ParamGroupType(str, Enum):
 class User(BaseModel):
     """User model for created_by and modified_by fields."""
 
-    name: str
-    email: str
+    name: Optional[str] = None
+    email: Optional[str] = None
 
 
 class SampleOffset(BaseModel):
     """Sample Offset model."""
 
-    _id: PydanticObjectId
-    start_time: datetime
-    end_time: datetime
-    start_pos: float
-    end_pos: float
+    id: Optional[PydanticObjectId] = None
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    start_pos: Optional[float] = None
+    end_pos: Optional[float] = None
 
 
 class TestResultValue(BaseModel):
     """Test Result Value model."""
 
-    _id: PydanticObjectId
-    test_result_Group_id: PydanticObjectId
-    test_result_Group_type: ParamGroupType
-    test_result_Group_name: str
-    test_result_Name: str
-    test_result_Value: Union[str, float]
-    unit: str
+    id: Optional[PydanticObjectId] = None
+    test_result_group_id: PydanticObjectId
+    test_result_group_type: Optional[ParamGroupType] = None
+    test_result_group_name: Optional[str] = None
+    test_result_name: Optional[str] = None
+    test_result_value: Optional[Union[str, float]] = None
+    unit: Optional[str] = None
 
 
 class TestResult(Document):
     """Test Results model."""
 
-    name: str
+    name: Optional[str] = None
     test_id: PydanticObjectId  # test reference
     test_plan_id: PydanticObjectId  # test_plan reference
-    start_time: datetime
-    end_time: datetime
-    test_result_values: list[TestResultValue]
-    test_plan_time: datetime
-    start_position: float
-    end_position: float
-    status: TestStatus
-    sensor_offsets: list[SampleOffset]
-    equipment_offsets: list[SampleOffset]
-    version: int
-    created_at: datetime
-    modified_at: datetime
-    created_by: User
-    modified_by: User
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    test_result_values: Optional[list[TestResultValue]] = None
+    test_plan_time: Optional[datetime] = None
+    start_position: Optional[float] = None
+    end_position: Optional[float] = None
+    status: Optional[TestStatus] = None
+    sensor_offsets: Optional[list[SampleOffset]] = None
+    equipment_offsets: Optional[list[SampleOffset]] = None
+    version: Optional[int] = None
+    created_at: Optional[datetime] = None
+    modified_at: Optional[datetime] = None
+    created_by: Optional[User] = None
+    modified_by: Optional[User] = None
 
     class Settings:
         name = "test_results"
+
+
+class TestData(BaseModel):
+    """Test Data."""
+
+    id: Optional[PydanticObjectId] = None
+    name: Optional[str] = None
+
+
+class TestPlanData(BaseModel):
+    """Test Plan data."""
+
+    id: Optional[PydanticObjectId] = None
+    name: Optional[str] = None
+    planned_values: Optional[list[TestPlanValue]] = None
+
+
+class TestResultOutput(TestResult):
+    """Test Result Output model."""
+
+    test: Optional[TestData] = None
+    test_plan: Optional[TestPlanData] = None

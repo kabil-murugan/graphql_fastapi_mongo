@@ -2,19 +2,18 @@
 
 from typing import Optional
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from dotenv import find_dotenv, load_dotenv
+from pydantic_settings import BaseSettings
+
+load_dotenv(find_dotenv())
 
 
 class Settings(BaseSettings):
     """Config class for the application settings."""
 
-    model_config = SettingsConfigDict(
-        env_file="src\\backend\\.env",
-        env_file_encoding="utf-8",
-        extra="ignore",
-    )
     mongo_url: Optional[str] = None
     mongo_db: Optional[str] = None
+    OPENAI_API_KEY: Optional[str] = None
 
 
 settings: Settings = Settings()

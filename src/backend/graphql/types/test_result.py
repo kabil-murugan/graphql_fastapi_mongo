@@ -19,7 +19,7 @@ from backend.graphql.types.test_plan import TestPlanValue
 class SampleOffset:
     """Sample Offset Object Type."""
 
-    id: strawberry.ID
+    id: Optional[strawberry.ID]
     start_time: Optional[datetime]
     end_time: Optional[datetime]
     start_pos: Optional[float]
@@ -30,7 +30,7 @@ class SampleOffset:
 class TestResultValue:
     """Test Result Value Object Type."""
 
-    id: strawberry.ID
+    id: Optional[strawberry.ID]
     test_result_Group_id: strawberry.ID
     test_result_Group_type: Optional[ParamGroupTypeEnum]
     test_result_Group_name: Optional[str]
@@ -43,7 +43,7 @@ class TestResultValue:
 class TestPlanData:
     """Test Plan data."""
 
-    id: strawberry.ID
+    id: Optional[strawberry.ID]
     name: Optional[str]
     planned_values: Optional[list[TestPlanValue]]
 

@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from motor.motor_asyncio import AsyncIOMotorClient
 
 client: AsyncIOMotorClient = AsyncIOMotorClient(
-    "mongodb://kabil1012:kabilm2003@localhost:27017"
+    "mongodb://kabilm10:kabilm1012@localhost:27017"
 )
 db = client["PI_test_database"]
 
@@ -17,10 +17,9 @@ fake = Faker()
 async def seed_tests():
     """Seed the Test collection."""
     tests = []
-    for _ in range(1000):
+    for _ in range(500):
         tests.append(
             {
-                "_id": ObjectId(),
                 "name": fake.word(),
                 "description": fake.text(max_nb_chars=200),
                 "test_type": fake.random_element(
@@ -43,7 +42,7 @@ async def seed_tests():
                 ),
                 "steps": [
                     {
-                        "_id": ObjectId(),
+                        "id": ObjectId(),
                         "step_name": fake.sentence(),
                         "description": fake.text(max_nb_chars=100),
                         "expected_result": fake.sentence(),
@@ -89,39 +88,45 @@ async def seed_tests():
             }
         )
     await db.tests.insert_many(tests)
-    print("Seeded 1,000 tests.")
-    return [test["_id"] for test in tests]
+    print("Seeded 500 tests.")
+
+    # Fetch all test IDs after insertion
+    test_ids = await db.tests.find({}, {"_id": 1}).to_list(length=None)
+    return [ObjectId(test["_id"]) for test in test_ids]
 
 
 async def seed_test_plans(test_ids):
     """Seed the TestPlan collection."""
     test_plans = []
-    for _ in range(1000):
+    for _ in range(500):
+        test_planned_values = []
+        for _ in range(10000):
+            test_planned_values.append(
+                {
+                    "id": ObjectId(),
+                    "test_plan_group_id": ObjectId(),
+                    "test_plan_group_type": fake.random_element(
+                        ["TYPE_A", "TYPE_B", "TYPE_C"]
+                    ),
+                    "test_plan_group_name": fake.word(),
+                    "test_plan_name": fake.word(),
+                    "test_plan_value": fake.random_element(
+                        [
+                            fake.random_int(min=1, max=100),
+                            fake.random_digit(),
+                        ]
+                    ),
+                    "unit": fake.word(),
+                }
+            )
+
         test_plans.append(
             {
-                "_id": ObjectId(),
                 "name": fake.word(),
                 "schema_test_plan_condition": fake.sentence(),
                 "test_id": fake.random_element(test_ids),
                 "test_planning_notes": fake.text(max_nb_chars=200),
-                "test_planned_values": [
-                    {
-                        "_id": ObjectId(),
-                        "test_plan_Group_id": ObjectId(),
-                        "test_plan_Group_type": fake.random_element(
-                            ["TYPE_A", "TYPE_B", "TYPE_C"]
-                        ),
-                        "test_plan_Group_name": fake.word(),
-                        "test_plan_Name": fake.word(),
-                        "test_plan_Value": fake.random_element(
-                            [
-                                fake.random_int(min=1, max=100),
-                                fake.random_digit(),
-                            ]
-                        ),
-                        "unit": fake.word(),
-                    }
-                ],
+                "test_planned_values": test_planned_values,
                 "created_by": {"name": fake.name(), "email": fake.email()},
                 "modified_by": {"name": fake.name(), "email": fake.email()},
                 "created_at": datetime.now(timezone.utc),
@@ -130,40 +135,48 @@ async def seed_test_plans(test_ids):
             }
         )
     await db.test_plans.insert_many(test_plans)
-    print("Seeded 1,000 test plans.")
-    return [test_plan["_id"] for test_plan in test_plans]
+    print("Seeded 500 test plans.")
+
+    # Fetch all test plan IDs after insertion
+    test_plan_ids = await db.test_plans.find({}, {"_id": 1}).to_list(
+        length=None
+    )
+    return [ObjectId(test_plan["_id"]) for test_plan in test_plan_ids]
 
 
 async def seed_test_results(test_ids, test_plan_ids):
     """Seed the TestResult collection."""
     test_results = []
-    for _ in range(1000):
+    for _ in range(500):
+        test_result_values = []
+        for _ in range(10000):
+            test_result_values.append(
+                {
+                    "id": ObjectId(),
+                    "test_result_group_id": ObjectId(),
+                    "test_result_group_type": fake.random_element(
+                        ["TYPE_A", "TYPE_B", "TYPE_C"]
+                    ),
+                    "test_result_group_name": fake.word(),
+                    "test_result_name": fake.word(),
+                    "test_result_value": fake.random_element(
+                        [
+                            fake.random_int(min=1, max=100),
+                            fake.random_digit(),
+                        ]
+                    ),
+                    "unit": fake.word(),
+                }
+            )
+
         test_results.append(
             {
-                "_id": ObjectId(),
                 "name": fake.word(),
                 "test_id": fake.random_element(test_ids),
                 "test_plan_id": fake.random_element(test_plan_ids),
                 "start_time": datetime.now(timezone.utc),
                 "end_time": datetime.now(timezone.utc),
-                "test_result_values": [
-                    {
-                        "_id": ObjectId(),
-                        "test_result_Group_id": ObjectId(),
-                        "test_result_Group_type": fake.random_element(
-                            ["TYPE_A", "TYPE_B", "TYPE_C"]
-                        ),
-                        "test_result_Group_name": fake.word(),
-                        "test_result_Name": fake.word(),
-                        "test_result_Value": fake.random_element(
-                            [
-                                fake.random_int(min=1, max=100),
-                                fake.random_digit(),
-                            ]
-                        ),
-                        "unit": fake.word(),
-                    }
-                ],
+                "test_result_values": test_result_values,
                 "test_plan_time": datetime.now(timezone.utc),
                 "start_position": fake.random_digit(),
                 "end_position": fake.random_digit(),
@@ -178,7 +191,7 @@ async def seed_test_results(test_ids, test_plan_ids):
                 ),
                 "sensor_offsets": [
                     {
-                        "_id": ObjectId(),
+                        "id": ObjectId(),
                         "start_time": datetime.now(timezone.utc),
                         "end_time": datetime.now(timezone.utc),
                         "start_pos": fake.random_digit(),
@@ -187,7 +200,7 @@ async def seed_test_results(test_ids, test_plan_ids):
                 ],
                 "equipment_offsets": [
                     {
-                        "_id": ObjectId(),
+                        "id": ObjectId(),
                         "start_time": datetime.now(timezone.utc),
                         "end_time": datetime.now(timezone.utc),
                         "start_pos": fake.random_digit(),
@@ -202,7 +215,7 @@ async def seed_test_results(test_ids, test_plan_ids):
             }
         )
     await db.test_results.insert_many(test_results)
-    print("Seeded 1,000 test results.")
+    print("Seeded 500 test results.")
 
 
 async def main():

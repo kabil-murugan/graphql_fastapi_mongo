@@ -24,7 +24,7 @@ class TestTypeEnum(Enum):
 class TestStep:
     """Test Step Object Type."""
 
-    id: strawberry.ID
+    id: Optional[strawberry.ID]
     step_name: Optional[str]
     description: Optional[str]
     expected_result: Optional[str]

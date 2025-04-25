@@ -45,7 +45,7 @@ class ParamGroupTypeEnum(Enum):
 class TestData:
     """Test Data."""
 
-    id: strawberry.ID
+    id: Optional[strawberry.ID]
     name: Optional[str]
 
 

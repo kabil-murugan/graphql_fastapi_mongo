@@ -27,17 +27,16 @@ def _extract_subfields(selection: SelectedField) -> dict[str, Any]:
     Returns:
         dict[str, Any]: A dictionary representing the extracted subfields.
     """
-    subfield: dict[str, Any] = {selection.name: []}
+    key = to_snake_case(selection.name)
+    subfield: dict[str, Any] = {key: []}
     for sub_selection in selection.selections:
         if isinstance(sub_selection, SelectedField):
+            if key not in subfield:
+                subfield[key] = []
             if sub_selection.selections:
-                subfield[to_snake_case(selection.name)].append(
-                    _extract_subfields(sub_selection)
-                )
+                subfield[key].append(_extract_subfields(sub_selection))
             else:
-                subfield[to_snake_case(selection.name)].append(
-                    to_snake_case(sub_selection.name)
-                )
+                subfield[key].append(to_snake_case(sub_selection.name))
     return subfield
 
 
@@ -267,7 +266,6 @@ def build_filter_aggregation_pipeline(
     aggregation_pipeline: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     from_collection, local_field, foreign_field, as_field = look_up_fields
-    secondary_filter_query = build_query_from_filters(filters)
     aggregation_pipeline.append(
         {
             "$lookup": {
@@ -275,11 +273,19 @@ def build_filter_aggregation_pipeline(
                 "localField": local_field,
                 "foreignField": foreign_field,
                 "as": as_field,
-                "pipeline": [
-                    {"$match": secondary_filter_query},
-                ],
             }
         },
     )
-    aggregation_pipeline.append({"$match": {as_field: {"$ne": []}}})
+    if filters:
+        secondary_filter_query = build_query_from_filters(filters)
+        aggregation_pipeline[-1]["$lookup"]["pipeline"] = [
+            {"$match": secondary_filter_query},
+        ]
+    aggregation_pipeline.append(
+        {
+            "$unwind": {
+                "path": f"${as_field}",
+            }
+        }
+    )
     return aggregation_pipeline

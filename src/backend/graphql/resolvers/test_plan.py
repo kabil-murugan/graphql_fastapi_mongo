@@ -3,7 +3,7 @@
 from typing import Any, Optional
 
 from backend.graphql.types.common import LogicalFilterInput
-from backend.models.test_plan import TestPlan
+from backend.models.test_plan import TestPlan, TestPlanOutput
 from backend.utils.logger import get_logger
 from backend.utils.utils import (
     build_filter_aggregation_pipeline,
@@ -30,7 +30,7 @@ async def get_test_plans(
     """
     logger.info(f"Fetching all test plans with fields: {fields}")
     projection = build_projection(fields)
-    aggregation_pipeline = [{"$project": projection}]
+    aggregation_pipeline = []
 
     if filters:
         test_filters, test_plan_filters = extract_filters_by_prefixes(
@@ -43,14 +43,19 @@ async def get_test_plans(
 
     if test_filters or any(f.startswith("test.") for f in projection):
         aggregation_pipeline = build_filter_aggregation_pipeline(
-            ("tests", "test_id", "_id", "tests"),
+            ("tests", "test_id", "_id", "test"),
             test_filters,
             aggregation_pipeline,
         )
+    aggregation_pipeline.append({"$project": projection})
 
     logger.info(f"Aggregation pipeline: {aggregation_pipeline}")
 
     test_plans = (
         await TestPlan.find_all().aggregate(aggregation_pipeline).to_list()
     )
-    return test_plans
+    if test_plans:
+        logger.info(f"Test plans fetched: {test_plans[0]}")
+    return [
+        TestPlanOutput.model_validate(test_plan) for test_plan in test_plans
+    ]

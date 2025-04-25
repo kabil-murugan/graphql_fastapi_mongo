@@ -29,11 +29,14 @@ async def get_tests(
     """
     logger.info(f"Fetching all tests with fields: {fields}")
 
-    aggregation_pipeline = [{"$project": build_projection(fields)}]
+    aggregation_pipeline = []
 
     if filters:
         test_filter_query = build_query_from_filters(filters)
         aggregation_pipeline.append({"$match": test_filter_query})
+    aggregation_pipeline.append({"$project": build_projection(fields)})
     tests = await Test.find_all().aggregate(aggregation_pipeline).to_list()
     logger.info(f"Pipeline: {aggregation_pipeline}")
+    if tests:
+        logger.info(f"Tests: {tests[0]}")
     return [Test.model_validate(test) for test in tests]

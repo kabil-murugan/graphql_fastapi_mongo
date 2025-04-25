@@ -17,8 +17,8 @@ from backend.graphql.types.common import (
 class TestPlanValue:
     """Test Plan Value Object Type."""
 
-    id: strawberry.ID
-    test_plan_Group_id: strawberry.ID
+    id: Optional[strawberry.ID]
+    test_plan_Group_id: Optional[strawberry.ID]
     test_plan_Group_type: Optional[ParamGroupTypeEnum]
     test_plan_Group_name: Optional[str]
     test_plan_Name: Optional[str]
