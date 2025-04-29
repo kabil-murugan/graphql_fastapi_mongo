@@ -11,9 +11,10 @@ from backend.graphql.resolvers.test_result import get_test_results
 from backend.graphql.types.common import LogicalFilterInput
 from backend.graphql.types.test import Test
 from backend.graphql.types.test_plan import TestPlan
-from backend.graphql.types.test_result import TestResult
+from backend.models.test_result import TestResultOutput
 from backend.utils.logger import get_logger
-from backend.utils.utils import perform_resolving_action
+from backend.utils.utils import perform_resolving_action, convert_object_ids
+import json
 
 logger = get_logger(__name__)
 
@@ -48,7 +49,7 @@ class Query:
         self,
         info: strawberry.Info,
         filters: Optional[LogicalFilterInput] = None,
-    ) -> list[TestPlan]:
+    ) -> strawberry.scalars.JSON:
         """Get all test plans.
         This function is used to resolve the test plans query.
 
@@ -68,7 +69,7 @@ class Query:
         self,
         info: strawberry.Info,
         filters: Optional[LogicalFilterInput] = None,
-    ) -> list[TestResult]:
+    ) -> list[str]:
         """Get all test results.
         This function is used to resolve the test results query.
 
@@ -87,4 +88,5 @@ class Query:
             "Fetching and validation completed in "
             f"{time.perf_counter() - start_time} seconds"
         )
-        return test_results
+        logger.info(f"Test Results: {test_results[0]}")
+        return [json.dumps(result) for result in test_results]

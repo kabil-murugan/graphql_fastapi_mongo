@@ -13,7 +13,7 @@ from backend.models.test_plan import TestPlanValue
 class SampleOffset(BaseModel):
     """Sample Offset model."""
 
-    id: Optional[PydanticObjectId] = None
+    id: Optional[str] = None
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
     start_pos: Optional[float] = None
@@ -23,7 +23,7 @@ class SampleOffset(BaseModel):
 class TestResultValue(BaseModel):
     """Test Result Value model."""
 
-    id: Optional[PydanticObjectId] = None
+    id: Optional[str] = None
     test_result_group_id: Optional[PydanticObjectId] = None
     test_result_group_type: Optional[ParamGroupType] = None
     test_result_group_name: Optional[str] = None

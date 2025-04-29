@@ -24,9 +24,6 @@ async def get_test_results(
     Args:
         fields (list[Any]): List of fields to include in the projection.
         filters (Optional[LogicalFilterInput], optional): Filters to apply.
-
-    Returns:
-        list[TestResult]: List of TestResult objects with the specified fields.
     """
     # logger.info(f"Fetching all test results with fields: {fields}")
     projection = build_projection(fields)
@@ -67,10 +64,43 @@ async def get_test_results(
             aggregation_pipeline,
         )
     aggregation_pipeline.append({"$project": projection})
+    aggregation_pipeline.append(
+        {
+            "$addFields": {
+                "_id": {"$toString": "$_id"},
+                "test_id": {"$toString": "$test_id"},
+                "test_plan_id": {"$toString": "$test_plan_id"},
+                "sensor_offsets": {
+                    "$map": {
+                        "input": "$sensor_offsets",
+                        "as": "offset",
+                        "in": {
+                            "id": {"$toString": "$$offset.id"},
+                            "start_pos": "$$offset.start_pos",
+                            "end_pos": "$$offset.end_pos",
+                        },
+                    }
+                },
+                "equipment_offsets": {
+                    "$map": {
+                        "input": "$equipment_offsets",
+                        "as": "offset",
+                        "in": {
+                            "id": {"$toString": "$$offset.id"},
+                            "start_pos": "$$offset.start_pos",
+                            "end_pos": "$$offset.end_pos",
+                        },
+                    }
+                },
+                "test._id": {"$toString": "$test._id"},
+                "test_plan._id": {"$toString": "$test_plan._id"},
+            }
+        }
+    )
     logger.info(f"Aggregation pipeline: {aggregation_pipeline}")
     test_results = (
         await TestResult.find_all().aggregate(aggregation_pipeline).to_list()
     )
-    # if test_results:
-    #     logger.info(f"Test results fetched: {test_results[0]}")
-    return [TestResultOutput.model_validate(test) for test in test_results]
+    if test_results:
+        logger.info(f"Test results fetched: {test_results[0]}")
+    return test_results

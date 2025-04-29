@@ -53,7 +53,6 @@ def execute_graphql():
     process_time = time.perf_counter() - start_time
 
     print(f"GraphQL Response Time: {process_time:.4f} seconds")
-    print(f"Tracing data: {response.json()["extensions"]}")
     return response.json()
 
 
@@ -72,7 +71,8 @@ def execute_rest():
 def main():
     """Main function to execute both endpoints."""
     print("Executing GraphQL Endpoint...")
-    execute_graphql()
+    response = execute_graphql()
+    print(response["data"]["testResults"][0])
 
     # print("\nExecuting REST Endpoint...")
     # rest_response = execute_rest()
