@@ -14,3 +14,9 @@
 | **Development Time**       | Longer initial setup but faster to add new features once set up.                     | Faster initial setup but slower to add new features for complex use cases.      |
 | **Documentation**          | Schema serves as self-documenting API; tools like GraphiQL provide interactive documentation. | Automatically generates OpenAPI documentation, which is widely supported.       |
 | **Dynamic Query Generation** | LLM can generate a single query for complex use cases, reducing the need for multiple requests. | LLM must map natural language to specific endpoints, which can be restrictive for complex queries. |
+
+## Performance Comparison Between FastAPI and GraphQL
+
+| **Test Case**                          | **FastAPI Process Time** | **GraphQL Process Time** | **Observation**                                                                 |
+|----------------------------------------|---------------------------|-----------------------------------|---------------------------------------------------------------------------------|
+| Fetched `testResults` with nested fields (`testPlan` and `test`) | 18.9198 seconds           | 82.3125 seconds                       | FastAPI is significantly faster due to the absence of GraphQL serialization. |
