@@ -1,38 +1,13 @@
 """Document model for test results collection."""
 
 from datetime import datetime
-from enum import Enum
 from typing import Optional, Union
 
 from beanie import Document, PydanticObjectId
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
+from backend.models.common import ParamGroupType, TestData, TestStatus, User
 from backend.models.test_plan import TestPlanValue
-
-
-class TestStatus(str, Enum):
-    """Enum for Test Status."""
-
-    PENDING = "PENDING"
-    IN_PROGRESS = "IN_PROGRESS"
-    COMPLETED = "COMPLETED"
-    FAILED = "FAILED"
-    CANCELLED = "CANCELLED"
-
-
-class ParamGroupType(str, Enum):
-    """Enum for Test Group Type."""
-
-    TYPE_A = "TYPE_A"
-    TYPE_B = "TYPE_B"
-    TYPE_C = "TYPE_C"
-
-
-class User(BaseModel):
-    """User model for created_by and modified_by fields."""
-
-    name: Optional[str] = None
-    email: Optional[str] = None
 
 
 class SampleOffset(BaseModel):
@@ -82,19 +57,12 @@ class TestResult(Document):
         name = "test_results"
 
 
-class TestData(BaseModel):
-    """Test Data."""
-
-    id: Optional[PydanticObjectId] = None
-    name: Optional[str] = None
-
-
 class TestPlanData(BaseModel):
     """Test Plan data."""
 
-    id: Optional[PydanticObjectId] = None
+    id: Optional[PydanticObjectId] = Field(None, alias="_id")
     name: Optional[str] = None
-    planned_values: Optional[list[TestPlanValue]] = None
+    test_planned_values: Optional[list[TestPlanValue]] = None
 
 
 class TestResultOutput(TestResult):

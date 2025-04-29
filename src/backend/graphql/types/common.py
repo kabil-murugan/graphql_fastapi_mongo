@@ -3,6 +3,7 @@
 from enum import Enum
 from typing import NewType, Optional, Union
 
+
 import strawberry
 
 VALUE = strawberry.scalar(

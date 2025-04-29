@@ -77,6 +77,8 @@ def build_projection(
     projection = {
         "test_id": 1,
         "test_plan_id": 1,
+        "test._id": 1,
+        "test_plan._id": 1,
     }
     for field in fields:
         if isinstance(field, str):
@@ -198,7 +200,7 @@ def extract_filters_by_prefixes(
         matched_index = match_prefix(filters.filter.field)
         if matched_index is not None:
             prefixed_filters_list[matched_index].filter = FilterInput(
-                field=filters.filter.field[len(prefixes[matched_index]):],
+                field=filters.filter.field[len(prefixes[matched_index]) :],
                 operation=filters.filter.operation,
                 value=filters.filter.value,
             )

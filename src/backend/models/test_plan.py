@@ -1,33 +1,19 @@
 """Document model for test plans collection."""
 
 from datetime import datetime
-from enum import Enum
 from typing import Optional, Union
 
 from beanie import Document, PydanticObjectId
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-
-class ParamGroupType(str, Enum):
-    """Enum for Test Plan Group Type."""
-
-    TYPE_A = "TYPE_A"
-    TYPE_B = "TYPE_B"
-    TYPE_C = "TYPE_C"
-
-
-class User(BaseModel):
-    """User model for created_by and modified_by fields."""
-
-    name: Optional[str] = None
-    email: Optional[str] = None
+from backend.models.common import ParamGroupType, TestData, User
 
 
 class TestPlanValue(BaseModel):
     """Test Plan Value model."""
 
-    id: Optional[PydanticObjectId] = Field(None)
-    test_plan_group_id: PydanticObjectId
+    id: Optional[PydanticObjectId] = None
+    test_plan_group_id: Optional[PydanticObjectId] = None
     test_plan_group_type: Optional[ParamGroupType] = None
     test_plan_group_name: Optional[str] = None
     test_plan_name: Optional[str] = None
@@ -51,13 +37,6 @@ class TestPlan(Document):
 
     class Settings:
         name = "test_plans"
-
-
-class TestData(BaseModel):
-    """Test Data."""
-
-    id: Optional[PydanticObjectId] = None
-    name: Optional[str] = None
 
 
 class TestPlanOutput(TestPlan):

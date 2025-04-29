@@ -100,7 +100,7 @@ async def seed_test_plans(test_ids):
     test_plans = []
     for _ in range(500):
         test_planned_values = []
-        for _ in range(10000):
+        for _ in range(500):
             test_planned_values.append(
                 {
                     "id": ObjectId(),
@@ -149,7 +149,7 @@ async def seed_test_results(test_ids, test_plan_ids):
     test_results = []
     for _ in range(500):
         test_result_values = []
-        for _ in range(10000):
+        for _ in range(500):
             test_result_values.append(
                 {
                     "id": ObjectId(),
@@ -220,7 +220,9 @@ async def seed_test_results(test_ids, test_plan_ids):
 
 async def main():
     test_ids = await seed_tests()
+    print(f"Test IDs: {test_ids[0]}")
     test_plan_ids = await seed_test_plans(test_ids)
+    print(f"Test Plan IDs: {test_plan_ids[0]}")
     await seed_test_results(test_ids, test_plan_ids)
     print("Database seeding completed.")
 

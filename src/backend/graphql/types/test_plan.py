@@ -18,11 +18,11 @@ class TestPlanValue:
     """Test Plan Value Object Type."""
 
     id: Optional[strawberry.ID]
-    test_plan_Group_id: Optional[strawberry.ID]
-    test_plan_Group_type: Optional[ParamGroupTypeEnum]
-    test_plan_Group_name: Optional[str]
-    test_plan_Name: Optional[str]
-    test_plan_Value: VALUE  # type: ignore
+    test_plan_group_id: Optional[strawberry.ID]
+    test_plan_group_type: Optional[ParamGroupTypeEnum]
+    test_plan_group_name: Optional[str]
+    test_plan_name: Optional[str]
+    test_plan_value: VALUE  # type: ignore
     unit: Optional[str]
 
 

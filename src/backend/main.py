@@ -10,7 +10,8 @@ from strawberry.fastapi import GraphQLRouter
 
 
 from backend.db.init_db import close_db, init_db
-from backend.controllers import generate_query
+
+# from backend.controllers import generate_query
 from backend.graphql.schema import graphql_schema
 from backend.utils.logger import get_logger
 
@@ -30,7 +31,7 @@ graphql_app = GraphQLRouter(schema=graphql_schema)
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(graphql_app, prefix="/graphql")
-app.include_router(generate_query.router)
+# app.include_router(generate_query.router)
 
 
 @app.middleware("http")

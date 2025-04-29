@@ -47,7 +47,7 @@ async def get_test_plans(
             test_filters,
             aggregation_pipeline,
         )
-    aggregation_pipeline.append({"$project": projection})
+    # aggregation_pipeline.append({"$project": projection})
 
     logger.info(f"Aggregation pipeline: {aggregation_pipeline}")
 

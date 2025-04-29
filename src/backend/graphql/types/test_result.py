@@ -31,11 +31,11 @@ class TestResultValue:
     """Test Result Value Object Type."""
 
     id: Optional[strawberry.ID]
-    test_result_Group_id: strawberry.ID
-    test_result_Group_type: Optional[ParamGroupTypeEnum]
-    test_result_Group_name: Optional[str]
-    test_result_Name: Optional[str]
-    test_result_Value: VALUE  # type: ignore
+    test_result_group_id: strawberry.ID
+    test_result_group_type: Optional[ParamGroupTypeEnum]
+    test_result_group_name: Optional[str]
+    test_result_name: Optional[str]
+    test_result_value: VALUE  # type: ignore
     unit: Optional[str]
 
 
@@ -45,7 +45,7 @@ class TestPlanData:
 
     id: Optional[strawberry.ID]
     name: Optional[str]
-    planned_values: Optional[list[TestPlanValue]]
+    test_planned_values: Optional[list[TestPlanValue]]
 
 
 @strawberry.type

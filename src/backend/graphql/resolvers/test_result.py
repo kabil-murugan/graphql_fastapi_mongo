@@ -28,7 +28,7 @@ async def get_test_results(
     Returns:
         list[TestResult]: List of TestResult objects with the specified fields.
     """
-    logger.info(f"Fetching all test results with fields: {fields}")
+    # logger.info(f"Fetching all test results with fields: {fields}")
     projection = build_projection(fields)
     aggregation_pipeline = []
 
@@ -72,6 +72,6 @@ async def get_test_results(
     test_results = (
         await TestResult.find_all().aggregate(aggregation_pipeline).to_list()
     )
-    if test_results:
-        logger.info(f"Test results fetched: {test_results[0]}")
+    # if test_results:
+    # logger.info(f"Test results fetched: {test_results[0]}")
     return [TestResultOutput.model_validate(test) for test in test_results]

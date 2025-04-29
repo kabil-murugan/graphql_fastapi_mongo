@@ -7,6 +7,8 @@ from typing import Optional, Union
 from beanie import Document, PydanticObjectId
 from pydantic import BaseModel
 
+from backend.models.common import TestStatus, User
+
 
 class TestType(str, Enum):
     """Enum for Test Type."""
@@ -16,23 +18,6 @@ class TestType(str, Enum):
     INTEGRATION = "INTEGRATION"
     REGRESSION = "REGRESSION"
     UNIT = "UNIT"
-
-
-class TestStatus(str, Enum):
-    """Enum for Test Status."""
-
-    PENDING = "PENDING"
-    IN_PROGRESS = "IN_PROGRESS"
-    COMPLETED = "COMPLETED"
-    FAILED = "FAILED"
-    CANCELLED = "CANCELLED"
-
-
-class User(BaseModel):
-    """User model for created_by and modified_by fields."""
-
-    name: Optional[str] = None
-    email: Optional[str] = None
 
 
 class TestStep(BaseModel):
