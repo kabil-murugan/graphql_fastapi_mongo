@@ -1,5 +1,6 @@
 """Queries for the GraphQL API."""
 
+import time
 from typing import Optional
 
 import strawberry
@@ -62,7 +63,7 @@ class Query:
             info, get_test_plans, filters=filters
         )
 
-    @strawberry.field(graphql_type=list[TestResult])
+    @strawberry.field()
     async def test_results(
         self,
         info: strawberry.Info,
@@ -78,6 +79,12 @@ class Query:
         Returns:
             list[TestResult]: List of TestResult objects.
         """
-        return await perform_resolving_action(
+        start_time = time.perf_counter()
+        test_results = await perform_resolving_action(
             info, get_test_results, filters=filters
         )
+        logger.info(
+            "Fetching and validation completed in "
+            f"{time.perf_counter() - start_time} seconds"
+        )
+        return test_results

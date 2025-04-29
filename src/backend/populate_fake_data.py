@@ -100,7 +100,7 @@ async def seed_test_plans(test_ids):
     test_plans = []
     for _ in range(500):
         test_planned_values = []
-        for _ in range(500):
+        for _ in range(1500):
             test_planned_values.append(
                 {
                     "id": ObjectId(),
@@ -149,7 +149,7 @@ async def seed_test_results(test_ids, test_plan_ids):
     test_results = []
     for _ in range(500):
         test_result_values = []
-        for _ in range(500):
+        for _ in range(2500):
             test_result_values.append(
                 {
                     "id": ObjectId(),

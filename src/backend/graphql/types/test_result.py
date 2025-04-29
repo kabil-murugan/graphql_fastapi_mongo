@@ -31,7 +31,7 @@ class TestResultValue:
     """Test Result Value Object Type."""
 
     id: Optional[strawberry.ID]
-    test_result_group_id: strawberry.ID
+    test_result_group_id: Optional[strawberry.ID]
     test_result_group_type: Optional[ParamGroupTypeEnum]
     test_result_group_name: Optional[str]
     test_result_name: Optional[str]

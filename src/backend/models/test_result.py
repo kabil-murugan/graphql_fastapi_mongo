@@ -24,7 +24,7 @@ class TestResultValue(BaseModel):
     """Test Result Value model."""
 
     id: Optional[PydanticObjectId] = None
-    test_result_group_id: PydanticObjectId
+    test_result_group_id: Optional[PydanticObjectId] = None
     test_result_group_type: Optional[ParamGroupType] = None
     test_result_group_name: Optional[str] = None
     test_result_name: Optional[str] = None

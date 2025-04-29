@@ -67,11 +67,10 @@ async def get_test_results(
             aggregation_pipeline,
         )
     aggregation_pipeline.append({"$project": projection})
-
     logger.info(f"Aggregation pipeline: {aggregation_pipeline}")
     test_results = (
         await TestResult.find_all().aggregate(aggregation_pipeline).to_list()
     )
     # if test_results:
-    # logger.info(f"Test results fetched: {test_results[0]}")
+    #     logger.info(f"Test results fetched: {test_results[0]}")
     return [TestResultOutput.model_validate(test) for test in test_results]
